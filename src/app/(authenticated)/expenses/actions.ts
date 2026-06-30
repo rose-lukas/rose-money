@@ -20,8 +20,8 @@ export async function addExpense(formData: FormData) {
   const description = (formData.get("description") as string) || null;
   const spentBy = formData.get("spent_by") as string;
 
-  if (!budgetId || !date || isNaN(amount) || !categoryId || !spentBy) {
-    return { error: "Please fill in all required fields." };
+  if (!budgetId || !date || isNaN(amount) || amount === 0 || !categoryId || !spentBy) {
+    return { error: "Please fill in all required fields (amount cannot be zero)." };
   }
 
   // Verify budget is active

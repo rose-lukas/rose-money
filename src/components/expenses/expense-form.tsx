@@ -57,14 +57,13 @@ export function ExpenseForm({
 
       <div className="space-y-2">
         <label htmlFor="amount" className="text-sm font-medium">
-          Amount *
+          Amount * <span className="font-normal text-muted-foreground">(negative for returns)</span>
         </label>
         <input
           id="amount"
           name="amount"
           type="number"
           step="0.01"
-          min="0.01"
           required
           inputMode="decimal"
           placeholder="0.00"
