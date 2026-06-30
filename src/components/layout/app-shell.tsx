@@ -59,9 +59,10 @@ interface AppShellProps {
 
 export function AppShell({ user, children }: AppShellProps) {
   const pathname = usePathname();
+  const isDashboard = pathname === "/dashboard";
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className={cn("flex min-h-full flex-col", isDashboard && "sm:max-h-none max-h-[100dvh] overflow-hidden")}>
       {/* Top header */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-lg">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
