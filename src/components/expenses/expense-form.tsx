@@ -136,7 +136,7 @@ export function ExpenseForm({
         <input
           ref={scanInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic"
+          accept="image/*"
           className="hidden"
           onChange={handleScanReceipt}
         />
