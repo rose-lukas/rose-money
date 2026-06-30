@@ -14,6 +14,8 @@ function getGreeting(): string {
   return "Good night";
 }
 
+// Note: getGreeting() on server uses UTC; mobile hero computes its own client-side greeting.
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -124,7 +126,6 @@ export default async function DashboardPage() {
 
       {/* ─── MOBILE HERO ─── */}
       <MobileHero
-        greeting={getGreeting()}
         firstName={firstName}
         monthName={getMonthName(month)}
         remaining={remaining}

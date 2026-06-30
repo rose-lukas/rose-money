@@ -4,8 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/format";
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  if (h < 21) return "Good evening";
+  return "Good night";
+}
+
 interface Props {
-  greeting: string;
   firstName: string;
   monthName: string;
   remaining: number;
@@ -18,7 +25,6 @@ interface Props {
 }
 
 export function MobileHero({
-  greeting,
   firstName,
   monthName,
   remaining,
@@ -33,7 +39,7 @@ export function MobileHero({
   const [greetingText, setGreetingText] = useState("");
   const [nameText, setNameText] = useState("");
 
-  const fullGreeting = `${greeting},`;
+  const fullGreeting = `${getGreeting()},`;
   const fullName = firstName;
 
   useEffect(() => {
