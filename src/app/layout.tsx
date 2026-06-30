@@ -16,6 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Rose Money",
   description: "Personal monthly budget and expense tracker",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Rose Money",
+  },
   icons: {
     icon: "/favicon.png",
     apple: "/apple-touch-icon.png",
