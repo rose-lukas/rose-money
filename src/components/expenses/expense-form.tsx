@@ -37,6 +37,38 @@ export function ExpenseForm({
     }
   }
 
+  // Compress image to stay under Vercel's body limit
+  async function compressImage(file: File): Promise<Blob> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        // Scale down to max 1200px on longest side (enough for receipt text)
+        const maxDim = 1200;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => resolve(blob!),
+          "image/jpeg",
+          0.8
+        );
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   async function handleScanReceipt(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -46,8 +78,12 @@ export function ExpenseForm({
     setScanning(true);
 
     try {
+      // Compress image before sending
+      const compressed = await compressImage(file);
+      const compressedFile = new File([compressed], file.name, { type: "image/jpeg" });
+
       const formData = new FormData();
-      formData.append("receipt", file);
+      formData.append("receipt", compressedFile);
 
       const res = await fetch("/api/scan-receipt", {
         method: "POST",
@@ -79,9 +115,8 @@ export function ExpenseForm({
       // Also set the receipt file on the file input for upload
       const receiptInput = form?.elements.namedItem("receipt") as HTMLInputElement;
       if (receiptInput) {
-        // Create a DataTransfer to set files on the input
         const dt = new DataTransfer();
-        dt.items.add(file);
+        dt.items.add(compressedFile);
         receiptInput.files = dt.files;
       }
 

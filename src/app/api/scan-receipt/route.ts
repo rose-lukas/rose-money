@@ -78,8 +78,9 @@ Example response:
     });
   } catch (e) {
     console.error("Receipt scan error:", e);
+    const message = e instanceof Error ? e.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to process receipt. Please try again." },
+      { error: `Failed to process receipt: ${message}` },
       { status: 500 }
     );
   }
