@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   description: "Personal monthly budget and expense tracker",
   icons: {
     icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 
