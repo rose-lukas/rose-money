@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CategoryManager } from "@/components/settings/category-manager";
 import { ProfileManager } from "@/components/settings/profile-manager";
 import { ChangePassword } from "@/components/settings/change-password";
+import { FontSelector } from "@/components/settings/font-selector";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -33,6 +34,7 @@ export default async function SettingsPage() {
 
       <CategoryManager categories={categories ?? []} />
       <ProfileManager profiles={profilesWithAvatars} />
+      <FontSelector />
       <ChangePassword />
     </div>
   );

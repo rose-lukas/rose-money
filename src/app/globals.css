@@ -134,6 +134,14 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Font overrides */
+html.font-system {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+html.font-serif {
+  font-family: Georgia, "Times New Roman", serif !important;
+}
+
 /* Print styles for recap page */
 @media print {
   /* Hide app chrome */
