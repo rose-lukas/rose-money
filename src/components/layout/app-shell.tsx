@@ -62,7 +62,7 @@ export function AppShell({ user, children }: AppShellProps) {
   const isDashboard = pathname === "/dashboard";
 
   return (
-    <div className={cn("flex min-h-full flex-col", isDashboard && "sm:max-h-none max-h-[100dvh] overflow-hidden")}>
+    <div className="flex min-h-full flex-col">
       {/* Top header */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-lg">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
@@ -102,7 +102,7 @@ export function AppShell({ user, children }: AppShellProps) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 px-4 py-5 pb-20 sm:px-6 sm:py-6 sm:pb-6">
+      <main className={cn("flex-1 px-4 py-5 pb-20 sm:px-6 sm:py-6 sm:pb-6", isDashboard && "pb-0 sm:pb-6")}>
         {children}
       </main>
 

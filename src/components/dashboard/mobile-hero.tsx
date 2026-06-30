@@ -88,7 +88,7 @@ export function MobileHero({
   }, [phase]);
 
   return (
-    <div className="sm:hidden flex flex-col items-center justify-center h-[calc(100dvh-9.5rem)] overflow-hidden -mt-2">
+    <div className="sm:hidden flex flex-col items-center justify-center h-[calc(100dvh-9rem)] -mt-2">
       {/* Greeting */}
       <div className="text-center mb-12">
         <p className="text-2xl text-muted-foreground h-8">
