@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { addExpense } from "@/app/(authenticated)/expenses/actions";
 
@@ -21,6 +21,10 @@ export function ExpenseForm({
 }: ExpenseFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanSuccess, setScanSuccess] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(formData: FormData) {
     setError(null);
@@ -33,8 +37,104 @@ export function ExpenseForm({
     }
   }
 
+  async function handleScanReceipt(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError(null);
+    setScanSuccess(null);
+    setScanning(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("receipt", file);
+
+      const res = await fetch("/api/scan-receipt", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Scan failed.");
+        setScanning(false);
+        return;
+      }
+
+      // Pre-fill form fields
+      const form = formRef.current;
+      if (form) {
+        if (data.date) {
+          (form.elements.namedItem("date") as HTMLInputElement).value = data.date;
+        }
+        if (data.total != null) {
+          (form.elements.namedItem("amount") as HTMLInputElement).value = String(data.total);
+        }
+        if (data.store) {
+          (form.elements.namedItem("store") as HTMLInputElement).value = data.store;
+        }
+      }
+
+      // Also set the receipt file on the file input for upload
+      const receiptInput = form?.elements.namedItem("receipt") as HTMLInputElement;
+      if (receiptInput) {
+        // Create a DataTransfer to set files on the input
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        receiptInput.files = dt.files;
+      }
+
+      const filled = [data.date && "date", data.store && "store", data.total != null && "total"].filter(Boolean);
+      setScanSuccess(`Found: ${filled.join(", ")}. Please review and save.`);
+    } catch {
+      setError("Failed to scan receipt. Please enter details manually.");
+    } finally {
+      setScanning(false);
+    }
+  }
+
   return (
-    <form action={handleSubmit} className="space-y-4">
+    <form ref={formRef} action={handleSubmit} className="space-y-4">
+      {/* Scan Receipt Button */}
+      <div className="rounded-lg border-2 border-dashed border-primary/30 p-4 text-center">
+        <input
+          ref={scanInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic"
+          capture="environment"
+          className="hidden"
+          onChange={handleScanReceipt}
+        />
+        <button
+          type="button"
+          disabled={scanning}
+          onClick={() => scanInputRef.current?.click()}
+          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity disabled:opacity-50"
+        >
+          {scanning ? (
+            <>
+              <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              Reading receipt...
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 12h4"/><path d="M10 16h4"/></svg>
+              Scan Receipt
+            </>
+          )}
+        </button>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Take a photo or choose an image to auto-fill details
+        </p>
+      </div>
+
+      {scanSuccess && (
+        <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-400">
+          {scanSuccess}
+        </div>
+      )}
+
       {error && (
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
