@@ -22,6 +22,7 @@ interface Props {
   totalIncome: number;
   totalFixed: number;
   totalFixedWithOverdraft: number;
+  budgetId: string;
 }
 
 export function MobileHero({
@@ -34,6 +35,7 @@ export function MobileHero({
   totalIncome,
   totalFixed,
   totalFixedWithOverdraft,
+  budgetId,
 }: Props) {
   const [phase, setPhase] = useState(0); // 0=hidden, 1=greeting typing, 2=name typing, 3=budget fade, 4=rest fade
   const [greetingText, setGreetingText] = useState("");
@@ -172,12 +174,12 @@ export function MobileHero({
               {formatCurrency(totalIncome)}
             </p>
           </div>
-          <div className="rounded-xl border p-3 text-center">
+          <Link href={`/budget/${budgetId}`} className="rounded-xl border p-3 text-center hover:bg-accent transition-colors">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Fixed</p>
             <p className="text-sm font-bold text-muted-foreground mt-0.5">
               {formatCurrency(totalFixedWithOverdraft)}
             </p>
-          </div>
+          </Link>
           <div className="rounded-xl border p-3 text-center">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Spent</p>
             <p className="text-sm font-bold text-orange-600 dark:text-orange-400 mt-0.5">

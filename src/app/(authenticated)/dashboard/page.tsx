@@ -135,6 +135,7 @@ export default async function DashboardPage() {
         totalIncome={totalIncome}
         totalFixed={totalFixed}
         totalFixedWithOverdraft={totalFixed + overdraft}
+        budgetId={budget.id}
       />
 
       {/* ─── DESKTOP VIEW ─── */}

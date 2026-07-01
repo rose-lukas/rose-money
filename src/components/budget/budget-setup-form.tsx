@@ -78,7 +78,7 @@ export function BudgetSetupForm({
             />
           ))}
         </div>
-        {isDraft && !addingIncome && (
+        {(isDraft || isActive) && !addingIncome && (
           <Button
             variant="outline"
             size="sm"
@@ -155,7 +155,7 @@ export function BudgetSetupForm({
             />
           ))}
         </div>
-        {isDraft && !addingExpense && (
+        {(isDraft || isActive) && !addingExpense && (
           <Button
             variant="outline"
             size="sm"
