@@ -3,6 +3,7 @@ import { getBudgetSummaries } from "./actions";
 import { HistoryCharts } from "@/components/history/history-charts";
 import { RunningAverage } from "@/components/history/running-average";
 import { ExpenseSearch } from "@/components/history/expense-search";
+import { HistoryMonthDetail } from "@/components/history/month-detail";
 import { formatCurrency } from "@/lib/format";
 
 export default async function HistoryPage() {
@@ -58,6 +59,15 @@ export default async function HistoryPage() {
 
       {/* Charts */}
       <HistoryCharts data={summaries} categories={categories ?? []} />
+
+      {/* Month detail drill-down */}
+      {summaries.length > 0 && (
+        <HistoryMonthDetail
+          summaries={summaries}
+          categories={categories ?? []}
+          profiles={profiles ?? []}
+        />
+      )}
 
       {/* Expense search */}
       <section className="rounded-lg border p-4 space-y-3">
