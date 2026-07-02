@@ -56,20 +56,20 @@ export function SpendingChart({ expenses, year, month }: Props) {
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="day"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(d) => `${d}`}
           />
           <YAxis
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v) => `$${Math.round(v)}`}
@@ -81,14 +81,15 @@ export function SpendingChart({ expenses, year, month }: Props) {
             contentStyle={{
               fontSize: "12px",
               borderRadius: "8px",
-              border: "1px solid hsl(var(--border))",
-              background: "hsl(var(--background))",
+              border: "1px solid var(--color-border)",
+              background: "var(--color-background)",
+              color: "var(--color-foreground)",
             }}
           />
           <Area
             type="monotone"
             dataKey="cumulative"
-            stroke="hsl(var(--primary))"
+            stroke="var(--color-primary)"
             strokeWidth={2}
             fill="url(#spendGradient)"
             dot={false}
