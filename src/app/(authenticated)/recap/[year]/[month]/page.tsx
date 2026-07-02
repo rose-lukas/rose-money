@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { RecapView } from "@/components/recap/recap-view";
+import { RecapMonthSelector } from "@/components/recap/recap-month-selector";
 
 interface Props {
   params: Promise<{ year: string; month: string }>;
@@ -100,8 +101,25 @@ export default async function RecapPage({ params }: Props) {
       pct: totalSpent > 0 ? (amount / totalSpent) * 100 : 0,
     }));
 
+  // Fetch all budgets for month selector
+  const { data: allBudgets } = await supabase
+    .from("monthly_budgets")
+    .select("id, year, month, status")
+    .in("status", ["active", "closed"])
+    .order("year", { ascending: false })
+    .order("month", { ascending: false });
+
   return (
-    <RecapView
+    <div className="space-y-4 print:space-y-2">
+      <div className="flex items-center justify-between print:hidden">
+        <h1 className="text-2xl font-bold tracking-tight">Monthly Recap</h1>
+        <RecapMonthSelector
+          budgets={allBudgets ?? []}
+          selectedYear={year}
+          selectedMonth={month}
+        />
+      </div>
+      <RecapView
       year={year}
       month={month}
       status={budget.status}
@@ -129,6 +147,7 @@ export default async function RecapPage({ params }: Props) {
       totalSpent={totalSpent}
       remaining={remaining}
       categoryBreakdown={categoryBreakdown}
-    />
+      />
+    </div>
   );
 }
