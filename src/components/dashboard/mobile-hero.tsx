@@ -37,18 +37,21 @@ export function MobileHero({
   totalFixedWithOverdraft,
   budgetId,
 }: Props) {
-  const [phase, setPhase] = useState(0); // 0=hidden, 1=greeting typing, 2=name typing, 3=budget fade, 4=rest fade
-  const [greetingText, setGreetingText] = useState("");
-  const [nameText, setNameText] = useState("");
+  // Skip animation if already played this session (PWA resume, back nav)
+  const alreadyPlayed = typeof window !== "undefined" && sessionStorage.getItem("heroAnimated") === "1";
+  const [phase, setPhase] = useState(alreadyPlayed ? 4 : 0);
+  const [greetingText, setGreetingText] = useState(alreadyPlayed ? `${getGreeting()},` : "");
+  const [nameText, setNameText] = useState(alreadyPlayed ? firstName : "");
 
   const fullGreeting = `${getGreeting()},`;
   const fullName = firstName;
 
   useEffect(() => {
+    if (alreadyPlayed) return;
     // Phase 1: type greeting
     const startDelay = setTimeout(() => setPhase(1), 200);
     return () => clearTimeout(startDelay);
-  }, []);
+  }, [alreadyPlayed]);
 
   useEffect(() => {
     if (phase === 1) {
@@ -86,6 +89,9 @@ export function MobileHero({
     if (phase === 3) {
       const t = setTimeout(() => setPhase(4), 300);
       return () => clearTimeout(t);
+    }
+    if (phase === 4) {
+      sessionStorage.setItem("heroAnimated", "1");
     }
   }, [phase]);
 
