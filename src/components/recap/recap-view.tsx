@@ -77,22 +77,12 @@ export function RecapView(props: Props) {
 
   return (
     <div className="recap-page space-y-6 max-w-3xl mx-auto">
-      {/* Print button - hidden in print */}
-      <div className="print:hidden flex justify-end">
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          Print Recap
-        </button>
-      </div>
-
       {/* Header */}
       <header className="text-center border-b pb-4">
         <h1 className="text-3xl font-bold">
           {monthName} {year}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground print-muted mt-1">
           Monthly Budget Recap
           {status === "active" && " (In Progress)"}
         </p>
@@ -105,13 +95,13 @@ export function RecapView(props: Props) {
           <span>Total Income</span>
           <span className="text-right font-medium">{formatCurrency(totalIncome)}</span>
           <span>Total Fixed Expenses</span>
-          <span className="text-right font-medium text-red-600">
+          <span className="text-right font-medium text-red-600 print-red">
             -{formatCurrency(totalFixed)}
           </span>
           {overdraft > 0 && (
             <>
               <span>Previous Month Overdraft</span>
-              <span className="text-right font-medium text-red-600">
+              <span className="text-right font-medium text-red-600 print-red">
                 -{formatCurrency(overdraft)}
               </span>
             </>
@@ -121,13 +111,13 @@ export function RecapView(props: Props) {
             {formatCurrency(variableBudget)}
           </span>
           <span>Total Variable Spending</span>
-          <span className="text-right font-medium text-orange-600">
+          <span className="text-right font-medium text-orange-600 print-orange">
             -{formatCurrency(totalSpent)}
           </span>
           <span className="font-semibold border-t pt-1">Remaining</span>
           <span
             className={`text-right font-bold border-t pt-1 ${
-              remaining >= 0 ? "text-green-600" : "text-red-600"
+              remaining >= 0 ? "text-green-600 print-green" : "text-red-600 print-red"
             }`}
           >
             {formatCurrency(remaining)}
@@ -180,8 +170,8 @@ export function RecapView(props: Props) {
         </table>
       </section>
 
-      {/* Charts row */}
-      <section className="avoid-break">
+      {/* Charts row - hidden in print since Recharts SVGs don't render */}
+      <section className="avoid-break print:hidden">
         <h2 className="text-lg font-semibold border-b pb-1 mb-3">Spending Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Category Pie */}
@@ -314,18 +304,18 @@ export function RecapView(props: Props) {
       {/* End-of-month callout */}
       <section className="avoid-break border-t pt-4">
         <div
-          className={`rounded-lg p-4 text-center ${
+          className={`recap-callout rounded-lg p-4 text-center ${
             remaining >= 0
               ? "bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
               : "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800"
           }`}
         >
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground print-muted">
             {remaining >= 0 ? "Month-End Surplus" : "Month-End Overdraft"}
           </p>
           <p
             className={`text-3xl font-bold mt-1 ${
-              remaining >= 0 ? "text-green-600" : "text-red-600"
+              remaining >= 0 ? "text-green-600 print-green" : "text-red-600 print-red"
             }`}
           >
             {formatCurrency(Math.abs(remaining))}

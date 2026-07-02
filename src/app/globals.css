@@ -144,22 +144,55 @@ html.font-serif {
 
 /* Print styles for recap page */
 @media print {
-  /* Hide app chrome */
+  /* Hide ALL app chrome */
   header,
   nav,
+  aside,
   .print\:hidden {
     display: none !important;
   }
 
-  /* Reset layout offsets */
+  /* Reset layout — remove sidebar offset, padding, max-widths */
+  body,
+  main,
   .sm\:ml-56 {
-    margin-left: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
   }
 
   body {
     background: white !important;
     color: black !important;
-    font-size: 11pt;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  /* Force all text to black */
+  * {
+    color: black !important;
+    border-color: #ccc !important;
+  }
+
+  /* Re-allow specific colors */
+  .print-green {
+    color: #16a34a !important;
+  }
+  .print-red {
+    color: #dc2626 !important;
+  }
+  .print-orange {
+    color: #ea580c !important;
+  }
+  .print-muted {
+    color: #666 !important;
+  }
+
+  /* Hide Recharts (they don't print reliably) */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    display: none !important;
   }
 
   /* Keep sections together */
@@ -168,21 +201,27 @@ html.font-serif {
     page-break-inside: avoid;
   }
 
-  /* Clean borders */
-  .recap-page section {
-    border: none !important;
+  /* Clean table sizing */
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+  }
+  td, th {
+    padding: 2pt 4pt !important;
   }
 
-  /* Recharts SVG prints well natively */
-  .recharts-responsive-container {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Force light colors for callouts */
-  .bg-green-50,
-  .bg-red-50 {
+  /* Summary callout */
+  .recap-callout {
+    border: 2px solid #ccc !important;
+    padding: 12pt !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    background: #f9fafb !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 0.6in;
+    size: letter;
   }
 }
