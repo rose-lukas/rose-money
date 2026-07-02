@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { BudgetSetupForm } from "@/components/budget/budget-setup-form";
 import { BudgetMonthSelector } from "@/components/budget/budget-month-selector";
+import { recalculateOverdraft } from "@/app/(authenticated)/budget/actions";
 
 export default async function BudgetDetailPage({
   params,
@@ -19,6 +20,20 @@ export default async function BudgetDetailPage({
 
   if (error || !budget) {
     redirect("/dashboard");
+  }
+
+  // Auto-recalculate overdraft if it's 0 and budget isn't closed
+  if (Number(budget.overdraft_from_previous) === 0 && budget.status !== "closed") {
+    await recalculateOverdraft(id);
+    // Re-fetch budget after recalculation
+    const { data: updatedBudget } = await supabase
+      .from("monthly_budgets")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (updatedBudget) {
+      Object.assign(budget, updatedBudget);
+    }
   }
 
   const { data: incomeEntries } = await supabase

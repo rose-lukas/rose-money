@@ -215,7 +215,7 @@ export function BudgetSetupForm({
 
       {/* Overdraft Section */}
       {Number(budget.overdraft_from_previous) > 0 && (
-        <section className="rounded-lg border border-orange-200 bg-orange-50 p-4 space-y-2">
+        <section className="rounded-lg border border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30 p-4 space-y-2">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold">Previous Month Overdraft</h2>
@@ -224,7 +224,7 @@ export function BudgetSetupForm({
                 forward from last month
               </p>
             </div>
-            {isDraft && (
+            {!isClosed && (
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"

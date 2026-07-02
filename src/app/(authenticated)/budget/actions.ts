@@ -36,7 +36,7 @@ export async function createMonthlyBudget(year: number, month: number) {
     .eq("month", prevMonth)
     .single();
 
-  if (prevBudget?.status === "closed") {
+  if (prevBudget && (prevBudget.status === "closed" || prevBudget.status === "active")) {
     // Calculate previous month's overdraft
     const { data: prevIncome } = await supabase
       .from("income_entries")
@@ -212,6 +212,51 @@ export async function updateOverdraftApplied(budgetId: string, applied: boolean)
     .update({ overdraft_applied: applied })
     .eq("id", budgetId);
   if (error) throw new Error(error.message);
+  revalidatePath("/budget");
+}
+
+export async function recalculateOverdraft(budgetId: string) {
+  const supabase = await createClient();
+
+  const { data: budget } = await supabase
+    .from("monthly_budgets")
+    .select("year, month")
+    .eq("id", budgetId)
+    .single();
+
+  if (!budget) throw new Error("Budget not found");
+
+  const prevMonth = budget.month === 1 ? 12 : budget.month - 1;
+  const prevYear = budget.month === 1 ? budget.year - 1 : budget.year;
+
+  const { data: prevBudget } = await supabase
+    .from("monthly_budgets")
+    .select("id")
+    .eq("year", prevYear)
+    .eq("month", prevMonth)
+    .single();
+
+  if (!prevBudget) return;
+
+  const [{ data: prevIncome }, { data: prevFixed }, { data: prevExpenses }] = await Promise.all([
+    supabase.from("income_entries").select("amount").eq("budget_id", prevBudget.id),
+    supabase.from("fixed_expenses").select("amount").eq("budget_id", prevBudget.id),
+    supabase.from("expenses").select("amount").eq("budget_id", prevBudget.id),
+  ]);
+
+  const totalIncome = (prevIncome ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const totalFixed = (prevFixed ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const totalSpent = (prevExpenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const remaining = totalIncome - totalFixed - totalSpent;
+
+  if (remaining < 0) {
+    const overdraftAmount = Math.abs(remaining);
+    await supabase
+      .from("monthly_budgets")
+      .update({ overdraft_from_previous: overdraftAmount, overdraft_applied: true })
+      .eq("id", budgetId);
+  }
+
   revalidatePath("/budget");
 }
 
