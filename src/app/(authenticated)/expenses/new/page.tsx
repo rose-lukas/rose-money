@@ -6,16 +6,23 @@ export default async function NewExpensePage() {
   const supabase = await createClient();
 
   const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
 
-  // Get the active budget
+  // Get the current month's budget (active or draft)
   const { data: budget } = await supabase
     .from("monthly_budgets")
     .select("id, year, month, status")
-    .eq("status", "active")
+    .eq("year", year)
+    .eq("month", month)
     .single();
 
   if (!budget) {
     redirect("/dashboard");
+  }
+
+  if (budget.status === "draft") {
+    redirect(`/budget/${budget.id}`);
   }
 
   // Fetch categories and profiles
