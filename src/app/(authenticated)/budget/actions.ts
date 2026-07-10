@@ -104,8 +104,7 @@ export async function createMonthlyBudget(year: number, month: number) {
   } else {
     // First month — seed from defaults
     await supabase.from("income_entries").insert([
-      { budget_id: newBudget.id, name: "Salary", amount: 5465.0, sort_order: 0 },
-      { budget_id: newBudget.id, name: "Child Benefit", amount: 391.33, sort_order: 1 },
+      { budget_id: newBudget.id, name: "Salary", amount: 0, sort_order: 0 },
     ]);
   }
 
@@ -131,14 +130,11 @@ export async function createMonthlyBudget(year: number, month: number) {
   } else {
     // First month — seed from defaults
     await supabase.from("fixed_expenses").insert([
-      { budget_id: newBudget.id, name: "Mortgage & House Tax", amount: 2783.96, sort_order: 0 },
-      { budget_id: newBudget.id, name: "Auto & Home Insurance", amount: 297.43, sort_order: 1 },
-      { budget_id: newBudget.id, name: "POTL Payment", amount: 153.83, sort_order: 2 },
-      { budget_id: newBudget.id, name: "School Debt", amount: 504.21, sort_order: 3 },
-      { budget_id: newBudget.id, name: "WiFi", amount: 50.85, sort_order: 4 },
-      { budget_id: newBudget.id, name: "Koodo (Phone)", amount: 60.63, sort_order: 5 },
-      { budget_id: newBudget.id, name: "Scotiabank Fee", amount: 16.95, sort_order: 6, notes: "opt out if never under 4000" },
-      { budget_id: newBudget.id, name: "Church", amount: 100.0, sort_order: 7 },
+      { budget_id: newBudget.id, name: "Mortgage/Rent", amount: 0, sort_order: 0 },
+      { budget_id: newBudget.id, name: "Car Payment", amount: 0, sort_order: 1 },
+      { budget_id: newBudget.id, name: "Insurance", amount: 0, sort_order: 2 },
+      { budget_id: newBudget.id, name: "Phone", amount: 0, sort_order: 3 },
+      { budget_id: newBudget.id, name: "Internet", amount: 0, sort_order: 4 },
     ]);
   }
 
