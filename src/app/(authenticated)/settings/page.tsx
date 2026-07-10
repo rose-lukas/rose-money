@@ -3,17 +3,32 @@ import { CategoryManager } from "@/components/settings/category-manager";
 import { ProfileManager } from "@/components/settings/profile-manager";
 import { ChangePassword } from "@/components/settings/change-password";
 import { FontSelector } from "@/components/settings/font-selector";
+import { MemberManager } from "@/components/settings/member-manager";
+import { getAccountMembers } from "./actions";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
 
-  const [{ data: categories }, { data: profiles }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [{ data: categories }, { data: profiles }, members] = await Promise.all([
     supabase
       .from("categories")
       .select("id, name, sort_order, is_active")
       .order("sort_order"),
     supabase.from("profiles").select("id, display_name, avatar_path"),
+    getAccountMembers(),
   ]);
+
+  // Determine if current user is owner
+  const isOwner = members.some(
+    (m: any) => {
+      const profile = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+      return profile?.id === user?.id && m.role === "owner";
+    }
+  );
 
   // Build avatar URLs
   const profilesWithAvatars = (profiles ?? []).map((p) => ({
@@ -32,6 +47,7 @@ export default async function SettingsPage() {
         </p>
       </div>
 
+      <MemberManager members={members as any} isOwner={isOwner} />
       <CategoryManager categories={categories ?? []} />
       <ProfileManager profiles={profilesWithAvatars} />
       <FontSelector />

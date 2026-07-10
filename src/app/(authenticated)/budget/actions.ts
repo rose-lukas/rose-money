@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUserAccountId } from "@/lib/account";
 
 export async function createMonthlyBudget(year: number, month: number) {
   const supabase = await createClient();
+  const accountId = await getUserAccountId();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -16,6 +18,7 @@ export async function createMonthlyBudget(year: number, month: number) {
   const { data: existing } = await supabase
     .from("monthly_budgets")
     .select("id")
+    .eq("account_id", accountId)
     .eq("year", year)
     .eq("month", month)
     .single();
@@ -32,6 +35,7 @@ export async function createMonthlyBudget(year: number, month: number) {
   const { data: prevBudget } = await supabase
     .from("monthly_budgets")
     .select("id, status")
+    .eq("account_id", accountId)
     .eq("year", prevYear)
     .eq("month", prevMonth)
     .single();
@@ -67,6 +71,7 @@ export async function createMonthlyBudget(year: number, month: number) {
   const { data: newBudget, error: budgetError } = await supabase
     .from("monthly_budgets")
     .insert({
+      account_id: accountId,
       year,
       month,
       status: "draft",
@@ -217,6 +222,7 @@ export async function updateOverdraftApplied(budgetId: string, applied: boolean)
 
 export async function recalculateOverdraft(budgetId: string) {
   const supabase = await createClient();
+  const accountId = await getUserAccountId();
 
   const { data: budget } = await supabase
     .from("monthly_budgets")
@@ -232,6 +238,7 @@ export async function recalculateOverdraft(budgetId: string) {
   const { data: prevBudget } = await supabase
     .from("monthly_budgets")
     .select("id")
+    .eq("account_id", accountId)
     .eq("year", prevYear)
     .eq("month", prevMonth)
     .single();

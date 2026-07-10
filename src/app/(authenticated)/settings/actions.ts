@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getUserAccountId } from "@/lib/account";
 
 export async function addCategory(name: string) {
   const supabase = await createClient();
+  const accountId = await getUserAccountId();
 
   // Get the highest sort_order
   const { data: last } = await supabase
@@ -18,7 +20,7 @@ export async function addCategory(name: string) {
 
   const { error } = await supabase
     .from("categories")
-    .insert({ name, sort_order: nextOrder });
+    .insert({ name, sort_order: nextOrder, account_id: accountId });
 
   if (error) {
     if (error.code === "23505") {
@@ -161,5 +163,130 @@ export async function changePassword(currentPassword: string, newPassword: strin
   const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) return { error: error.message };
 
+  return { success: true };
+}
+
+export async function addMemberToAccount(email: string) {
+  const supabase = await createClient();
+  const accountId = await getUserAccountId();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Check that current user is owner
+  const { data: membership } = await supabase
+    .from("account_members")
+    .select("role")
+    .eq("account_id", accountId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!membership || membership.role !== "owner") {
+    return { error: "Only the account owner can add members." };
+  }
+
+  // Use service role key to look up user by email
+  const { createClient: createServiceClient } = await import("@supabase/supabase-js");
+  const supabaseAdmin = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+  if (listError) return { error: "Could not look up users." };
+
+  const targetUser = listData?.users?.find((u) => u.email === email);
+  if (!targetUser) {
+    return { error: "No registered user found with that email. They must register first." };
+  }
+
+  // Check if already a member
+  const { data: existingMember } = await supabase
+    .from("account_members")
+    .select("id")
+    .eq("account_id", accountId)
+    .eq("user_id", targetUser.id)
+    .single();
+
+  if (existingMember) {
+    return { error: "This user is already a member of your account." };
+  }
+
+  // Add as member using admin client to bypass RLS
+  const { error: addError } = await supabaseAdmin
+    .from("account_members")
+    .insert({
+      account_id: accountId,
+      user_id: targetUser.id,
+      role: "member",
+      invited_by: user.id,
+    });
+
+  if (addError) return { error: addError.message };
+
+  revalidatePath("/settings");
+  return { success: true };
+}
+
+export async function getAccountMembers() {
+  const supabase = await createClient();
+  const accountId = await getUserAccountId();
+
+  const { data } = await supabase
+    .from("account_members")
+    .select(`
+      id, role, joined_at,
+      profiles:user_id(id, display_name)
+    `)
+    .eq("account_id", accountId)
+    .order("joined_at");
+
+  return data ?? [];
+}
+
+export async function removeMember(memberId: string) {
+  const supabase = await createClient();
+  const accountId = await getUserAccountId();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Check that current user is owner
+  const { data: membership } = await supabase
+    .from("account_members")
+    .select("role")
+    .eq("account_id", accountId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!membership || membership.role !== "owner") {
+    return { error: "Only the account owner can remove members." };
+  }
+
+  // Don't allow removing yourself
+  const { data: targetMember } = await supabase
+    .from("account_members")
+    .select("user_id")
+    .eq("id", memberId)
+    .single();
+
+  if (targetMember?.user_id === user.id) {
+    return { error: "You cannot remove yourself from the account." };
+  }
+
+  const { error } = await supabase
+    .from("account_members")
+    .delete()
+    .eq("id", memberId)
+    .eq("account_id", accountId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/settings");
   return { success: true };
 }

@@ -1,11 +1,28 @@
 export interface Profile {
   id: string;
   display_name: string;
+  avatar_path?: string | null;
   created_at: string;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface AccountMember {
+  id: string;
+  account_id: string;
+  user_id: string;
+  role: "owner" | "member";
+  invited_by: string | null;
+  joined_at: string;
 }
 
 export interface Category {
   id: string;
+  account_id: string;
   name: string;
   sort_order: number;
   is_active: boolean;
@@ -16,6 +33,7 @@ export type BudgetStatus = "draft" | "active" | "closed";
 
 export interface MonthlyBudget {
   id: string;
+  account_id: string;
   year: number;
   month: number;
   status: BudgetStatus;
