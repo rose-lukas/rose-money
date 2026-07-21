@@ -1,6 +1,6 @@
 {
-  "name": "RoseApp",
-  "short_name": "RoseApp",
+  "name": "RoseHome",
+  "short_name": "RoseHome",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

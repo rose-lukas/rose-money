@@ -1,4 +1,4 @@
-export const APP_NAME = "RoseApp";
+export const APP_NAME = "RoseHome";
 
 export const DEFAULT_CATEGORIES = [
   "Groceries",

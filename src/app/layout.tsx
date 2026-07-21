@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Modern geometric wordmark font for the RoseApp brand
+// Modern geometric wordmark font for the RoseHome brand
 const poppins = Poppins({
   variable: "--font-brand",
   subsets: ["latin"],
@@ -22,13 +22,13 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "RoseApp",
+  title: "RoseHome",
   description: "Your household apps, all in one place",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "RoseApp",
+    title: "RoseHome",
   },
   icons: {
     icon: "/favicon.png",

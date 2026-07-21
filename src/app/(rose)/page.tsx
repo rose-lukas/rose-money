@@ -23,7 +23,7 @@ export default function LauncherPage() {
               className="text-4xl font-bold tracking-tight"
               style={{ fontFamily: "var(--font-brand)" }}
             >
-              RoseApp
+              RoseHome
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Tap an app to get started
@@ -37,7 +37,7 @@ export default function LauncherPage() {
                 return <AppTile key={app.id} href={app.href} label={app.name} color={app.color} icon={<Icon className="relative h-9 w-9" />} />;
               })}
 
-              {/* General RoseApp settings */}
+              {/* General RoseHome settings */}
               <AppTile
                 href="/settings"
                 label="Settings"

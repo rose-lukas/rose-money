@@ -39,7 +39,7 @@ export default function LoginPage() {
             className="text-3xl font-bold tracking-tight"
             style={{ fontFamily: "var(--font-brand)" }}
           >
-            RoseApp
+            RoseHome
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "login" ? "Sign in to manage your budget" : "Create a new account"}
