@@ -4,6 +4,7 @@ import { ProfileManager } from "@/components/settings/profile-manager";
 import { ChangePassword } from "@/components/settings/change-password";
 import { FontSelector } from "@/components/settings/font-selector";
 import { MemberManager } from "@/components/settings/member-manager";
+import { getUserAccountId } from "@/lib/account";
 import { getAccountMembers } from "./actions";
 
 export default async function SettingsPage() {
@@ -12,6 +13,10 @@ export default async function SettingsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Ensure the user has an account (lazily provisions one if missing)
+  // before running account-scoped queries.
+  await getUserAccountId();
 
   const [{ data: categories }, { data: profiles }, members] = await Promise.all([
     supabase

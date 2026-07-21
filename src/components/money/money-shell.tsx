@@ -4,11 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-function IconGrid() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="3" rx="1.5"/><rect width="7" height="7" x="14" y="14" rx="1.5"/><rect width="7" height="7" x="3" y="14" rx="1.5"/></svg>
-  );
-}
 function IconHome() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
@@ -45,16 +40,16 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   add?: boolean;
-  home?: boolean;
 }
 
-// Mobile bottom navigation — includes the Rose Home button
+// Mobile bottom navigation
 const mobileNav: NavItem[] = [
-  { href: "/", label: "Rose", icon: <IconGrid />, home: true },
   { href: "/money", label: "Home", icon: <IconHome /> },
+  { href: "/money/history", label: "History", icon: <IconChart /> },
   { href: "/money/expenses/new", label: "Add", icon: <IconPlus />, add: true },
   { href: "/money/expenses", label: "Expenses", icon: <IconList /> },
   { href: "/money/budget", label: "Budget", icon: <IconWallet /> },
+  { href: "/settings", label: "Settings", icon: <IconSettings /> },
 ];
 
 // Desktop sidebar navigation
@@ -68,7 +63,6 @@ const sideNav: NavItem[] = [
 ];
 
 function isItemActive(pathname: string, item: NavItem): boolean {
-  if (item.home) return false; // Rose home is never "active" inside an app
   if (item.href === "/money") return pathname === "/money";
   return pathname.startsWith(item.href);
 }
@@ -122,13 +116,6 @@ export function MoneyShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar navigation */}
       <aside className="fixed left-0 top-14 hidden h-[calc(100vh-3.5rem)] w-56 border-r bg-background/50 backdrop-blur-sm p-4 sm:flex sm:flex-col sm:justify-between">
         <div className="space-y-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <IconGrid />
-            <span>Rose Home</span>
-          </Link>
           <nav className="space-y-1">
             {sideNav.map((item) => {
               const isActive = isItemActive(pathname, item);

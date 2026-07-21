@@ -35,8 +35,11 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center flex flex-col items-center">
           <RoseLogo className="h-12 w-12 mb-3" />
-          <h1 className="text-2xl font-bold tracking-tight">
-            Rose Money
+          <h1
+            className="text-3xl font-bold tracking-tight"
+            style={{ fontFamily: "var(--font-brand)" }}
+          >
+            RoseApp
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "login" ? "Sign in to manage your budget" : "Create a new account"}

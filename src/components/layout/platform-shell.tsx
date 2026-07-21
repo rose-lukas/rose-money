@@ -22,9 +22,14 @@ export function PlatformShell({ user, children }: PlatformShellProps) {
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-lg">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           {/* Rose home button (desktop returns to launcher) */}
-          <Link href="/" className="flex items-center gap-2" title="Rose home">
+          <Link href="/" className="flex items-center gap-2" title="RoseApp home">
             <RoseLogo />
-            <h1 className="text-base font-bold tracking-tight hidden sm:block">Rose</h1>
+            <h1
+              className="text-lg font-bold tracking-tight hidden sm:block"
+              style={{ fontFamily: "var(--font-brand)" }}
+            >
+              RoseApp
+            </h1>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />

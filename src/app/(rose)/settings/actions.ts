@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getUserAccountId } from "@/lib/account";
 
 export async function addCategory(name: string) {
@@ -188,12 +189,7 @@ export async function addMemberToAccount(email: string) {
   }
 
   // Use service role key to look up user by email
-  const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-  const supabaseAdmin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  const supabaseAdmin = createAdminClient();
 
   const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
   if (listError) return { error: "Could not look up users." };

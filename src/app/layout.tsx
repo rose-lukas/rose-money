@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FontLoader } from "@/components/font-loader";
 import "./globals.css";
@@ -14,14 +14,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Modern geometric wordmark font for the RoseApp brand
+const poppins = Poppins({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
+
 export const metadata: Metadata = {
-  title: "Rose Money",
-  description: "Personal monthly budget and expense tracker",
+  title: "RoseApp",
+  description: "Your household apps, all in one place",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Rose Money",
+    title: "RoseApp",
   },
   icons: {
     icon: "/favicon.png",
@@ -43,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

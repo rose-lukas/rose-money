@@ -1,6 +1,6 @@
 {
-  "name": "Rose Money",
-  "short_name": "Rose Money",
+  "name": "RoseApp",
+  "short_name": "RoseApp",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

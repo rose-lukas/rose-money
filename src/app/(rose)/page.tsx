@@ -11,39 +11,46 @@ function IconSettings({ className }: { className?: string }) {
 
 export default function LauncherPage() {
   return (
-    <div className="px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-3xl space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Rose</h1>
-          <p className="text-muted-foreground">Your apps</p>
+    <div className="px-4 pt-12 pb-10 sm:px-6 sm:pt-20">
+      <div className="mx-auto max-w-4xl space-y-10">
+        <div className="text-center sm:text-left">
+          <h1
+            className="text-3xl font-bold tracking-tight"
+            style={{ fontFamily: "var(--font-brand)" }}
+          >
+            RoseApp
+          </h1>
+          <p className="mt-1 text-muted-foreground">Your apps</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
-          {ROSE_APPS.map((app) => {
-            const Icon = app.icon;
-            return (
-              <Link
-                key={app.id}
-                href={app.href}
-                className="flex flex-col items-center gap-2 group"
-              >
-                <div
-                  className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-md transition-transform group-active:scale-95 group-hover:scale-105`}
+        <div className="sm:rounded-3xl sm:border sm:bg-muted/30 sm:p-12 sm:shadow-sm">
+          <div className="grid grid-cols-3 gap-6 sm:grid-cols-5 sm:gap-10">
+            {ROSE_APPS.map((app) => {
+              const Icon = app.icon;
+              return (
+                <Link
+                  key={app.id}
+                  href={app.href}
+                  className="flex flex-col items-center gap-2 group"
                 >
-                  <Icon className="h-8 w-8" />
-                </div>
-                <span className="text-xs font-medium">{app.name}</span>
-              </Link>
-            );
-          })}
+                  <div
+                    className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-md transition-transform group-active:scale-95 group-hover:scale-105 sm:h-20 sm:w-20 sm:rounded-3xl`}
+                  >
+                    <Icon className="h-8 w-8 sm:h-10 sm:w-10" />
+                  </div>
+                  <span className="text-xs font-medium sm:text-sm">{app.name}</span>
+                </Link>
+              );
+            })}
 
-          {/* General Rose settings */}
-          <Link href="/settings" className="flex flex-col items-center gap-2 group">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md transition-transform group-active:scale-95 group-hover:scale-105">
-              <IconSettings className="h-8 w-8" />
-            </div>
-            <span className="text-xs font-medium">Settings</span>
-          </Link>
+            {/* General RoseApp settings */}
+            <Link href="/settings" className="flex flex-col items-center gap-2 group">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md transition-transform group-active:scale-95 group-hover:scale-105 sm:h-20 sm:w-20 sm:rounded-3xl">
+                <IconSettings className="h-8 w-8 sm:h-10 sm:w-10" />
+              </div>
+              <span className="text-xs font-medium sm:text-sm">Settings</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>
