@@ -11,48 +11,70 @@ function IconSettings({ className }: { className?: string }) {
 
 export default function LauncherPage() {
   return (
-    <div className="px-4 pt-12 pb-10 sm:px-6 sm:pt-20">
-      <div className="mx-auto max-w-4xl space-y-10">
-        <div className="text-center sm:text-left">
-          <h1
-            className="text-3xl font-bold tracking-tight"
-            style={{ fontFamily: "var(--font-brand)" }}
-          >
-            RoseApp
-          </h1>
-          <p className="mt-1 text-muted-foreground">Your apps</p>
-        </div>
+    <div className="relative min-h-[calc(100vh-3.5rem)] overflow-hidden">
+      {/* Ambient wallpaper */}
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 via-background to-background" />
+      <div className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
-        <div className="sm:rounded-3xl sm:border sm:bg-muted/30 sm:p-12 sm:shadow-sm">
-          <div className="grid grid-cols-3 gap-6 sm:grid-cols-5 sm:gap-10">
-            {ROSE_APPS.map((app) => {
-              const Icon = app.icon;
-              return (
-                <Link
-                  key={app.id}
-                  href={app.href}
-                  className="flex flex-col items-center gap-2 group"
-                >
-                  <div
-                    className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${app.color} text-white shadow-md transition-transform group-active:scale-95 group-hover:scale-105 sm:h-20 sm:w-20 sm:rounded-3xl`}
-                  >
-                    <Icon className="h-8 w-8 sm:h-10 sm:w-10" />
-                  </div>
-                  <span className="text-xs font-medium sm:text-sm">{app.name}</span>
-                </Link>
-              );
-            })}
+      <div className="px-5 pt-14 pb-14 sm:px-6 sm:pt-24">
+        <div className="mx-auto max-w-4xl space-y-12">
+          <div className="text-center">
+            <h1
+              className="text-4xl font-bold tracking-tight"
+              style={{ fontFamily: "var(--font-brand)" }}
+            >
+              RoseApp
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tap an app to get started
+            </p>
+          </div>
 
-            {/* General RoseApp settings */}
-            <Link href="/settings" className="flex flex-col items-center gap-2 group">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-400 to-slate-600 text-white shadow-md transition-transform group-active:scale-95 group-hover:scale-105 sm:h-20 sm:w-20 sm:rounded-3xl">
-                <IconSettings className="h-8 w-8 sm:h-10 sm:w-10" />
-              </div>
-              <span className="text-xs font-medium sm:text-sm">Settings</span>
-            </Link>
+          <div className="mx-auto max-w-2xl sm:rounded-[2rem] sm:border sm:border-border/60 sm:bg-card/40 sm:p-12 sm:shadow-xl sm:backdrop-blur-sm">
+            <div className="grid grid-cols-3 gap-x-6 gap-y-8 sm:grid-cols-4 sm:gap-x-10 sm:gap-y-10">
+              {ROSE_APPS.map((app) => {
+                const Icon = app.icon;
+                return <AppTile key={app.id} href={app.href} label={app.name} color={app.color} icon={<Icon className="relative h-9 w-9" />} />;
+              })}
+
+              {/* General RoseApp settings */}
+              <AppTile
+                href="/settings"
+                label="Settings"
+                color="from-slate-400 to-slate-600"
+                icon={<IconSettings className="relative h-9 w-9" />}
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function AppTile({
+  href,
+  label,
+  color,
+  icon,
+}: {
+  href: string;
+  label: string;
+  color: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Link href={href} className="group flex flex-col items-center gap-2.5">
+      <div
+        className={`relative flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-[1.4rem] bg-gradient-to-br ${color} text-white shadow-lg ring-1 ring-white/10 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-xl group-active:scale-95 sm:h-20 sm:w-20`}
+      >
+        {/* Glossy highlight */}
+        <div className="absolute inset-0 rounded-[1.4rem] bg-gradient-to-b from-white/25 to-transparent opacity-60" />
+        {icon}
+      </div>
+      <span className="text-xs font-medium text-foreground/90 sm:text-sm">
+        {label}
+      </span>
+    </Link>
   );
 }

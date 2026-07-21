@@ -49,7 +49,7 @@ const mobileNav: NavItem[] = [
   { href: "/money/expenses/new", label: "Add", icon: <IconPlus />, add: true },
   { href: "/money/expenses", label: "Expenses", icon: <IconList /> },
   { href: "/money/budget", label: "Budget", icon: <IconWallet /> },
-  { href: "/settings", label: "Settings", icon: <IconSettings /> },
+  { href: "/money/settings", label: "Settings", icon: <IconSettings /> },
 ];
 
 // Desktop sidebar navigation
@@ -59,7 +59,7 @@ const sideNav: NavItem[] = [
   { href: "/money/expenses/new", label: "Add Expense", icon: <IconPlus /> },
   { href: "/money/budget", label: "Budget", icon: <IconWallet /> },
   { href: "/money/history", label: "History", icon: <IconChart /> },
-  { href: "/settings", label: "Settings", icon: <IconSettings /> },
+  { href: "/money/settings", label: "Settings", icon: <IconSettings /> },
 ];
 
 function isItemActive(pathname: string, item: NavItem): boolean {
