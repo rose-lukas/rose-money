@@ -18,11 +18,11 @@ export default async function NewExpensePage() {
     .single();
 
   if (!budget) {
-    redirect("/dashboard");
+    redirect("/money");
   }
 
   if (budget.status === "draft") {
-    redirect(`/budget/${budget.id}`);
+    redirect(`/money/budget/${budget.id}`);
   }
 
   // Fetch categories and profiles

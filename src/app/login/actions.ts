@@ -20,7 +20,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function register(formData: FormData) {
@@ -99,7 +99,7 @@ export async function register(formData: FormData) {
   await supabaseAdmin.from("categories").insert(categoryInserts);
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function logout() {

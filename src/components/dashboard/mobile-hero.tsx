@@ -165,7 +165,7 @@ export function MobileHero({
       >
         <div className="flex justify-center">
           <Link
-            href="/expenses/new"
+            href="/money/expenses/new"
             className="flex items-center justify-center gap-2 rounded-full border px-6 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
@@ -180,7 +180,7 @@ export function MobileHero({
               {formatCurrency(totalIncome)}
             </p>
           </div>
-          <Link href={`/budget/${budgetId}`} className="rounded-xl border p-3 text-center hover:bg-accent transition-colors">
+          <Link href={`/money/budget/${budgetId}`} className="rounded-xl border p-3 text-center hover:bg-accent transition-colors">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Fixed</p>
             <p className="text-sm font-bold text-muted-foreground mt-0.5">
               {formatCurrency(totalFixedWithOverdraft)}

@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { AppShell } from "@/components/layout/app-shell";
+import { PlatformShell } from "@/components/layout/platform-shell";
 
-export default async function DashboardLayout({
+export default async function RoseLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -28,7 +28,7 @@ export default async function DashboardLayout({
     : null;
 
   return (
-    <AppShell
+    <PlatformShell
       user={{
         id: user.id,
         email: user.email ?? "",
@@ -36,9 +36,7 @@ export default async function DashboardLayout({
         avatarUrl,
       }}
     >
-      <div className="sm:ml-56">
-        {children}
-      </div>
-    </AppShell>
+      {children}
+    </PlatformShell>
   );
 }

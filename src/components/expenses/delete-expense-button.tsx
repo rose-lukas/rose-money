@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteExpense } from "@/app/(authenticated)/expenses/actions";
+import { deleteExpense } from "@/app/(rose)/money/expenses/actions";
 import { useState } from "react";
 
 export function DeleteExpenseButton({ id }: { id: string }) {

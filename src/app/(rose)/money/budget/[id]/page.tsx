@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { BudgetSetupForm } from "@/components/budget/budget-setup-form";
 import { BudgetMonthSelector } from "@/components/budget/budget-month-selector";
-import { recalculateOverdraft } from "@/app/(authenticated)/budget/actions";
+import { recalculateOverdraft } from "@/app/(rose)/money/budget/actions";
 
 export default async function BudgetDetailPage({
   params,
@@ -19,7 +19,7 @@ export default async function BudgetDetailPage({
     .single();
 
   if (error || !budget) {
-    redirect("/dashboard");
+    redirect("/money");
   }
 
   // Auto-recalculate overdraft if it's 0 and budget isn't closed

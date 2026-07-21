@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { addMemberToAccount, removeMember } from "@/app/(authenticated)/settings/actions";
+import { addMemberToAccount, removeMember } from "@/app/(rose)/settings/actions";
 
 interface Member {
   id: string;

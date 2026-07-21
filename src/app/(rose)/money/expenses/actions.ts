@@ -73,9 +73,9 @@ export async function addExpense(formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
-  redirect("/dashboard");
+  revalidatePath("/money");
+  revalidatePath("/money/expenses");
+  redirect("/money");
 }
 
 export async function updateExpense(id: string, formData: FormData) {
@@ -104,9 +104,9 @@ export async function updateExpense(id: string, formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
-  redirect("/expenses");
+  revalidatePath("/money");
+  revalidatePath("/money/expenses");
+  redirect("/money/expenses");
 }
 
 export async function deleteExpense(id: string) {
@@ -126,6 +126,6 @@ export async function deleteExpense(id: string) {
   const { error } = await supabase.from("expenses").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
-  revalidatePath("/dashboard");
-  revalidatePath("/expenses");
+  revalidatePath("/money");
+  revalidatePath("/money/expenses");
 }

@@ -24,7 +24,7 @@ export async function createMonthlyBudget(year: number, month: number) {
     .single();
 
   if (existing) {
-    redirect(`/budget/${existing.id}`);
+    redirect(`/money/budget/${existing.id}`);
   }
 
   // Check for overdraft from previous month
@@ -138,8 +138,8 @@ export async function createMonthlyBudget(year: number, month: number) {
     ]);
   }
 
-  revalidatePath("/dashboard");
-  redirect(`/budget/${newBudget.id}`);
+  revalidatePath("/money");
+  redirect(`/money/budget/${newBudget.id}`);
 }
 
 export async function updateIncomeEntry(
@@ -152,7 +152,7 @@ export async function updateIncomeEntry(
     .update(data)
     .eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function addIncomeEntry(budgetId: string, name: string, amount: number) {
@@ -164,14 +164,14 @@ export async function addIncomeEntry(budgetId: string, name: string, amount: num
     sort_order: 99,
   });
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function deleteIncomeEntry(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("income_entries").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function updateFixedExpense(
@@ -184,7 +184,7 @@ export async function updateFixedExpense(
     .update(data)
     .eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function addFixedExpense(budgetId: string, name: string, amount: number) {
@@ -196,14 +196,14 @@ export async function addFixedExpense(budgetId: string, name: string, amount: nu
     sort_order: 99,
   });
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function deleteFixedExpense(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("fixed_expenses").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function updateOverdraftApplied(budgetId: string, applied: boolean) {
@@ -213,7 +213,7 @@ export async function updateOverdraftApplied(budgetId: string, applied: boolean)
     .update({ overdraft_applied: applied })
     .eq("id", budgetId);
   if (error) throw new Error(error.message);
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function recalculateOverdraft(budgetId: string) {
@@ -260,7 +260,7 @@ export async function recalculateOverdraft(budgetId: string) {
       .eq("id", budgetId);
   }
 
-  revalidatePath("/budget");
+  revalidatePath("/money/budget");
 }
 
 export async function confirmBudget(budgetId: string) {
@@ -282,8 +282,8 @@ export async function confirmBudget(budgetId: string) {
     .eq("status", "draft");
 
   if (error) throw new Error(error.message);
-  revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/money");
+  redirect("/money");
 }
 
 export async function closeBudget(budgetId: string) {
@@ -296,6 +296,6 @@ export async function closeBudget(budgetId: string) {
     .eq("status", "active");
 
   if (error) throw new Error(error.message);
-  revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/money");
+  redirect("/money");
 }

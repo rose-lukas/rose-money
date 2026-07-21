@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { addExpense } from "@/app/(authenticated)/expenses/actions";
+import { addExpense } from "@/app/(rose)/money/expenses/actions";
 
 interface ExpenseFormProps {
   budgetId: string;

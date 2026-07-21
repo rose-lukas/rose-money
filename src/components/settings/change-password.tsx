@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { changePassword } from "@/app/(authenticated)/settings/actions";
+import { changePassword } from "@/app/(rose)/settings/actions";
 
 export function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState("");

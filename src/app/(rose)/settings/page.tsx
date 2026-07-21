@@ -39,19 +39,21 @@ export default async function SettingsPage() {
   }));
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage categories and user profiles.
-        </p>
-      </div>
+    <div className="px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-3xl space-y-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="mt-1 text-muted-foreground">
+            Manage categories and user profiles.
+          </p>
+        </div>
 
-      <MemberManager members={members as any} isOwner={isOwner} />
-      <CategoryManager categories={categories ?? []} />
-      <ProfileManager profiles={profilesWithAvatars} />
-      <FontSelector />
-      <ChangePassword />
+        <MemberManager members={members as any} isOwner={isOwner} />
+        <CategoryManager categories={categories ?? []} />
+        <ProfileManager profiles={profilesWithAvatars} />
+        <FontSelector />
+        <ChangePassword />
+      </div>
     </div>
   );
 }
