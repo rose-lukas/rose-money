@@ -114,3 +114,27 @@ export async function deleteFreezerItem(id: string) {
   revalidatePath("/freezer");
   return { success: true };
 }
+
+export async function reorderFreezerItems(idsInOrder: string[]) {
+  const supabase = await createClient();
+  const accountId = await getUserAccountId();
+
+  if (!Array.isArray(idsInOrder) || idsInOrder.length === 0) {
+    return { error: "No items to reorder." };
+  }
+
+  const updates = idsInOrder.map((id, index) =>
+    supabase
+      .from("freezer_items")
+      .update({ sort_order: index + 1 })
+      .eq("id", id)
+      .eq("account_id", accountId)
+  );
+
+  const results = await Promise.all(updates);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { error: failed.error.message };
+
+  revalidatePath("/freezer");
+  return { success: true };
+}

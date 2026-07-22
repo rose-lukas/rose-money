@@ -19,6 +19,7 @@ export function ExpenseForm({
   currentUserId,
   defaultDate,
 }: ExpenseFormProps) {
+  const [entryType, setEntryType] = useState<"expense" | "return">("expense");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -30,6 +31,7 @@ export function ExpenseForm({
     setError(null);
     setLoading(true);
     formData.set("budget_id", budgetId);
+    formData.set("entry_type", entryType);
     const result = await addExpense(formData);
     if (result?.error) {
       setError(result.error);
@@ -190,19 +192,55 @@ export function ExpenseForm({
       </div>
 
       <div className="space-y-2">
+        <label className="text-sm font-medium">Type *</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setEntryType("expense")}
+            aria-pressed={entryType === "expense"}
+            className={`h-11 rounded-md border-2 text-sm font-semibold transition-colors ${
+              entryType === "expense"
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-input bg-background text-foreground"
+            }`}
+          >
+            Expense
+          </button>
+          <button
+            type="button"
+            onClick={() => setEntryType("return")}
+            aria-pressed={entryType === "return"}
+            className={`h-11 rounded-md border-2 text-sm font-semibold transition-colors ${
+              entryType === "return"
+                ? "border-emerald-700 bg-emerald-700 text-white"
+                : "border-input bg-background text-foreground"
+            }`}
+          >
+            Return
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
         <label htmlFor="amount" className="text-sm font-medium">
-          Amount * <span className="font-normal text-muted-foreground">(negative for returns)</span>
+          Amount *
         </label>
         <input
           id="amount"
           name="amount"
           type="number"
+          min="0.01"
           step="0.01"
           required
           inputMode="decimal"
           placeholder="0.00"
           className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-lg"
         />
+        <p className="text-xs text-muted-foreground">
+          {entryType === "expense"
+            ? "Saved as a regular expense."
+            : "Saved as a return (negative amount)."}
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -284,7 +322,7 @@ export function ExpenseForm({
       </div>
 
       <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-        {loading ? "Saving..." : "Save Expense"}
+        {loading ? "Saving..." : entryType === "return" ? "Save Return" : "Save Expense"}
       </Button>
     </form>
   );

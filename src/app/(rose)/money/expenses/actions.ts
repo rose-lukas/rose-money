@@ -14,7 +14,9 @@ export async function addExpense(formData: FormData) {
 
   const budgetId = formData.get("budget_id") as string;
   const date = formData.get("date") as string;
-  const amount = parseFloat(formData.get("amount") as string);
+  const rawAmount = parseFloat(formData.get("amount") as string);
+  const entryType = (formData.get("entry_type") as string) === "return" ? "return" : "expense";
+  const amount = entryType === "return" ? -Math.abs(rawAmount) : Math.abs(rawAmount);
   const categoryId = formData.get("category_id") as string;
   const store = (formData.get("store") as string) || null;
   const description = (formData.get("description") as string) || null;

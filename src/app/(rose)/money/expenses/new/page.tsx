@@ -6,6 +6,13 @@ export default async function NewExpensePage() {
   const supabase = await createClient();
 
   const now = new Date();
+  const easternFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const defaultDate = easternFormatter.format(now);
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
 
@@ -50,7 +57,7 @@ export default async function NewExpensePage() {
         categories={categories ?? []}
         profiles={profiles ?? []}
         currentUserId={user?.id ?? ""}
-        defaultDate={now.toISOString().split("T")[0]}
+        defaultDate={defaultDate}
       />
     </div>
   );

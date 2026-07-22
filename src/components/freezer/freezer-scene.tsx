@@ -1,26 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AmountBadge, WeightBadge } from "./amount-badge";
 import { ItemModal } from "./item-modal";
 import { AddItemModal } from "./add-item-modal";
+import { deleteFreezerItem, reorderFreezerItems } from "@/app/(rose)/freezer/actions";
 import type { FreezerItem } from "./types";
 
 function ItemTile({
   item,
   index,
   onClick,
+  dragging,
+  dragOffset,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  itemRef,
 }: {
   item: FreezerItem;
   index: number;
   onClick: () => void;
+  dragging: boolean;
+  dragOffset: { x: number; y: number };
+  draggable: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDragOver: () => void;
+  onDrop: () => void;
+  onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerMove: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  itemRef: (el: HTMLButtonElement | null) => void;
 }) {
   return (
     <button
+      ref={itemRef}
       type="button"
       onClick={onClick}
-      className="animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95"
-      style={{ animationDelay: `${index * 70}ms` }}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
+      className={`animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95 ${
+        dragging ? "z-30 scale-105 opacity-70 shadow-[6px_8px_0_rgba(15,23,42,0.9)] transition-none" : "opacity-100"
+      }`}
+      style={{
+        animationDelay: `${index * 70}ms`,
+        transform: dragging
+          ? `translate(${dragOffset.x}px, ${dragOffset.y}px)`
+          : undefined,
+      }}
     >
       <div className="text-4xl leading-none">{item.emoji}</div>
       <div className="font-doodle line-clamp-1 text-base leading-tight text-slate-800">
@@ -50,10 +96,34 @@ function AddTile({ onClick }: { onClick: () => void }) {
 }
 
 export function FreezerScene({ items }: { items: FreezerItem[] }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const [selected, setSelected] = useState<FreezerItem | null>(null);
   const [adding, setAdding] = useState(false);
+  const [orderedItems, setOrderedItems] = useState(items);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverDelete, setDragOverDelete] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const justDragged = useRef(false);
+  const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const eatZoneRef = useRef<HTMLDivElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setOrderedItems(items);
+  }, [items]);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   function toggle() {
     if (open) {
@@ -63,6 +133,135 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
       setOpen(true);
       window.setTimeout(() => setRevealed(true), 260);
     }
+  }
+
+  function moveItem(list: FreezerItem[], fromId: string, toId: string) {
+    const fromIndex = list.findIndex((x) => x.id === fromId);
+    const toIndex = list.findIndex((x) => x.id === toId);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return list;
+
+    const next = [...list];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    return next;
+  }
+
+  function persistOrder(next: FreezerItem[]) {
+    startTransition(async () => {
+      await reorderFreezerItems(next.map((x) => x.id));
+      router.refresh();
+    });
+  }
+
+  function handleDropOnItem(targetId: string) {
+    if (!draggingId || draggingId === targetId) return;
+    const next = moveItem(orderedItems, draggingId, targetId);
+    if (next !== orderedItems) {
+      setOrderedItems(next);
+      persistOrder(next);
+    }
+    setDragOffset({ x: 0, y: 0 });
+    setDraggingId(null);
+  }
+
+  function handleDropToEat() {
+    if (!draggingId) return;
+    const deletingId = draggingId;
+    setOrderedItems((current) => current.filter((x) => x.id !== deletingId));
+    setDragOffset({ x: 0, y: 0 });
+    setDraggingId(null);
+    setDragOverDelete(false);
+    startTransition(async () => {
+      await deleteFreezerItem(deletingId);
+      router.refresh();
+    });
+  }
+
+  function pointInRect(x: number, y: number, rect: DOMRect) {
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
+
+  function findDropTarget(x: number, y: number): { type: "eat" | "item"; id?: string } | null {
+    const eatRect = eatZoneRef.current?.getBoundingClientRect();
+    if (eatRect && pointInRect(x, y, eatRect)) {
+      return { type: "eat" };
+    }
+
+    for (const [id, el] of Object.entries(itemRefs.current)) {
+      if (!el || id === draggingId) continue;
+      const rect = el.getBoundingClientRect();
+      if (pointInRect(x, y, rect)) {
+        return { type: "item", id };
+      }
+    }
+
+    return null;
+  }
+
+  function handleTouchStart(id: string) {
+    if (!isMobile || pending) return;
+    setDraggingId(id);
+    setDragOffset({ x: 0, y: 0 });
+  }
+
+  function handlePointerDown(id: string, e: React.PointerEvent<HTMLButtonElement>) {
+    if (!isMobile || pending) return;
+    e.preventDefault();
+    activePointerIdRef.current = e.pointerId;
+    touchStartRef.current = { x: e.clientX, y: e.clientY };
+    handleTouchStart(id);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!isMobile || !draggingId) return;
+    if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
+      return;
+    }
+    const start = touchStartRef.current;
+    if (!start) return;
+    e.preventDefault();
+    setDragOffset({ x: e.clientX - start.x, y: e.clientY - start.y });
+    const target = findDropTarget(e.clientX, e.clientY);
+    setDragOverDelete(target?.type === "eat");
+  }
+
+  function handlePointerUp(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!isMobile || !draggingId) return;
+    if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
+      return;
+    }
+    activePointerIdRef.current = null;
+
+    if (touchStartRef.current == null) {
+      touchStartRef.current = null;
+      setDragOffset({ x: 0, y: 0 });
+      setDraggingId(null);
+      setDragOverDelete(false);
+      return;
+    }
+
+    justDragged.current = true;
+    window.setTimeout(() => {
+      justDragged.current = false;
+    }, 180);
+
+    const target = findDropTarget(e.clientX, e.clientY);
+    if (target?.type === "eat") {
+      touchStartRef.current = null;
+      handleDropToEat();
+      return;
+    }
+    if (target?.type === "item" && target.id) {
+      touchStartRef.current = null;
+      handleDropOnItem(target.id);
+      setDragOverDelete(false);
+      return;
+    }
+
+    touchStartRef.current = null;
+    setDragOffset({ x: 0, y: 0 });
+    setDraggingId(null);
+    setDragOverDelete(false);
   }
 
   return (
@@ -88,12 +287,43 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
           <div className="grid max-h-[42vh] grid-cols-3 gap-3 overflow-y-auto p-2 sm:grid-cols-4">
             {revealed && (
               <>
-                {items.map((item, i) => (
+                {orderedItems.map((item, i) => (
                   <ItemTile
                     key={item.id}
                     item={item}
                     index={i}
-                    onClick={() => setSelected(item)}
+                    dragging={draggingId === item.id}
+                    dragOffset={draggingId === item.id ? dragOffset : { x: 0, y: 0 }}
+                    draggable={!isMobile}
+                    onClick={() => {
+                      if (draggingId || pending || justDragged.current) {
+                        justDragged.current = false;
+                        return;
+                      }
+                      setSelected(item);
+                    }}
+                    onDragStart={() => setDraggingId(item.id)}
+                    onDragEnd={() => {
+                      justDragged.current = true;
+                      window.setTimeout(() => {
+                        justDragged.current = false;
+                      }, 140);
+                      setDragOffset({ x: 0, y: 0 });
+                      touchStartRef.current = null;
+                      activePointerIdRef.current = null;
+                      setDragOverDelete(false);
+                      setDraggingId(null);
+                    }}
+                    onPointerDown={(e) => handlePointerDown(item.id, e)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onDragOver={() => {
+                      // Keep this as a no-op so the tile is a valid drop target.
+                    }}
+                    onDrop={() => handleDropOnItem(item.id)}
+                    itemRef={(el) => {
+                      itemRefs.current[item.id] = el;
+                    }}
                   />
                 ))}
                 <AddTile onClick={() => setAdding(true)} />
@@ -102,14 +332,15 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
           </div>
         </div>
 
-        {/* Freezer graphic (whole thing toggles open/closed) */}
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label={open ? "Close the freezer" : "Open the freezer"}
-          className="block w-[300px] max-w-[82vw] cursor-pointer rounded-[1.6rem] outline-none focus-visible:ring-4 focus-visible:ring-sky-300"
-        >
-          <div className={`relative ${open ? "" : "animate-rh-bob"}`}>
+        {/* Freezer graphic + drag-to-eat zone */}
+        <div className="flex items-end gap-4 sm:gap-6">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={open ? "Close the freezer" : "Open the freezer"}
+            className={`${draggingId && isMobile ? "hidden sm:block" : "block"} w-[300px] max-w-[82vw] cursor-pointer rounded-[1.6rem] outline-none focus-visible:ring-4 focus-visible:ring-sky-300`}
+          >
+            <div className={`relative ${open ? "" : "animate-rh-bob"}`}>
             {/* Frosty mist rising from the opening (only when open) */}
             {open && (
               <div
@@ -121,11 +352,11 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
             {/* Body box */}
             <div className="rounded-[1.5rem] border-4 border-slate-800 bg-gradient-to-b from-white to-sky-50 p-3 pb-0 shadow-2xl">
               {/* Open top — the interior cavity revealed when the lid is off */}
-              <div className="relative h-24 overflow-hidden rounded-xl border-4 border-slate-300 bg-gradient-to-b from-sky-700 to-slate-900 shadow-[inset_0_14px_26px_rgba(0,0,0,0.7)]">
+              <div className="relative h-24 overflow-hidden rounded-xl border-4 border-sky-200 bg-gradient-to-b from-sky-100 via-cyan-100 to-sky-200 shadow-[inset_0_10px_18px_rgba(125,211,252,0.45)]">
                 {/* frosty rim highlight */}
-                <div className="absolute inset-x-2 top-1 h-2 rounded-full bg-white/40 blur-[2px]" />
+                <div className="absolute inset-x-2 top-1 h-2 rounded-full bg-white/80 blur-[2px]" />
                 {/* frost specks on the interior */}
-                <div className="absolute inset-0 opacity-50 [background:radial-gradient(circle_at_20%_60%,white_0,transparent_16%),radial-gradient(circle_at_72%_38%,white_0,transparent_12%),radial-gradient(circle_at_48%_82%,white_0,transparent_11%)]" />
+                <div className="absolute inset-0 opacity-70 [background:radial-gradient(circle_at_20%_60%,white_0,transparent_16%),radial-gradient(circle_at_72%_38%,white_0,transparent_12%),radial-gradient(circle_at_48%_82%,white_0,transparent_11%)]" />
               </div>
 
               {/* Front wall */}
@@ -166,8 +397,34 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                 tap to open ❄︎
               </span>
             </div>
-          </div>
-        </button>
+            </div>
+          </button>
+
+          {draggingId && (
+            <div
+              ref={eatZoneRef}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOverDelete(true);
+              }}
+              onDragLeave={() => setDragOverDelete(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                handleDropToEat();
+              }}
+              className={`${isMobile ? "mb-0 h-[18rem] w-[300px] max-w-[82vw]" : "mb-4 h-28 w-24"} flex shrink-0 select-none flex-col items-center justify-center rounded-2xl border-4 border-slate-800 bg-white shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform ${
+                dragOverDelete ? "scale-105 bg-rose-50" : ""
+              }`}
+              aria-label="Eat item"
+              title="Drop here to eat it"
+            >
+              <div className={`${isMobile ? "text-8xl" : "text-4xl"} leading-none`}>🍽️</div>
+              <div className="font-doodle mt-1 text-sm text-slate-700">
+                {dragOverDelete ? "Nom nom" : "Eat"}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {selected && (
