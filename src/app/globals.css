@@ -225,3 +225,36 @@ html.font-serif {
     size: letter;
   }
 }
+
+/* ── Login page flourishes ── */
+@keyframes rh-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes rh-blob {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -28px) scale(1.12); }
+  66% { transform: translate(-18px, 18px) scale(0.94); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes rh-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rh-glow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+.animate-rh-float { animation: rh-float 6s ease-in-out infinite; }
+.animate-rh-blob { animation: rh-blob 20s ease-in-out infinite; }
+.animate-rh-fade-up { animation: rh-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-rh-glow { animation: rh-glow 5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rh-float,
+  .animate-rh-blob,
+  .animate-rh-fade-up,
+  .animate-rh-glow {
+    animation: none;
+  }
+}
