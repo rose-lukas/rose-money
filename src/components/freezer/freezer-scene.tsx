@@ -1,55 +1,54 @@
 "use client";
 
 import { useState } from "react";
+import { AmountBadge } from "./amount-badge";
+import { ItemModal } from "./item-modal";
+import { AddItemModal } from "./add-item-modal";
+import type { FreezerItem } from "./types";
 
-export interface FreezerItem {
-  id: string;
-  name: string;
-  emoji: string;
-  amount:
-    | { kind: "fraction"; num: number; den: number }
-    | { kind: "count"; num: number };
-}
-
-const FRACTION_GLYPHS: Record<string, string> = {
-  "1/2": "½",
-  "1/3": "⅓",
-  "2/3": "⅔",
-  "1/4": "¼",
-  "3/4": "¾",
-};
-
-function AmountBadge({ amount }: { amount: FreezerItem["amount"] }) {
-  const label =
-    amount.kind === "count"
-      ? `×${amount.num}`
-      : FRACTION_GLYPHS[`${amount.num}/${amount.den}`] ??
-        `${amount.num}/${amount.den}`;
+function ItemTile({
+  item,
+  index,
+  onClick,
+}: {
+  item: FreezerItem;
+  index: number;
+  onClick: () => void;
+}) {
   return (
-    <span className="inline-flex min-w-7 items-center justify-center rounded-full border-2 border-slate-800 bg-sky-100 px-2 py-0.5 text-sm font-bold leading-none text-slate-800">
-      {label}
-    </span>
-  );
-}
-
-function ItemCard({ item, index }: { item: FreezerItem; index: number }) {
-  return (
-    <div
-      className="animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)]"
+    <button
+      type="button"
+      onClick={onClick}
+      className="animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95"
       style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="text-4xl leading-none">{item.emoji}</div>
-      <div className="font-doodle text-base leading-tight text-slate-800">
+      <div className="font-doodle line-clamp-1 text-base leading-tight text-slate-800">
         {item.name}
       </div>
       <AmountBadge amount={item.amount} />
-    </div>
+    </button>
+  );
+}
+
+function AddTile({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="animate-rh-rise flex flex-col items-center justify-center gap-1 rounded-2xl border-[3px] border-dashed border-slate-400 bg-white/60 p-3 text-center text-slate-500 transition-transform hover:-translate-y-0.5 active:scale-95"
+    >
+      <div className="text-4xl leading-none">＋</div>
+      <div className="font-doodle text-base leading-tight">Add item</div>
+    </button>
   );
 }
 
 export function FreezerScene({ items }: { items: FreezerItem[] }) {
   const [open, setOpen] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [selected, setSelected] = useState<FreezerItem | null>(null);
+  const [adding, setAdding] = useState(false);
 
   function toggle() {
     if (open) {
@@ -81,11 +80,20 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
             revealed ? "mb-4 max-h-[42vh] opacity-100" : "mb-0 max-h-0 opacity-0"
           }`}
         >
-          <div className="grid max-h-[42vh] grid-cols-2 gap-3 overflow-y-auto p-2 sm:grid-cols-3">
-            {revealed &&
-              items.map((item, i) => (
-                <ItemCard key={item.id} item={item} index={i} />
-              ))}
+          <div className="grid max-h-[42vh] grid-cols-3 gap-3 overflow-y-auto p-2 sm:grid-cols-4">
+            {revealed && (
+              <>
+                {items.map((item, i) => (
+                  <ItemTile
+                    key={item.id}
+                    item={item}
+                    index={i}
+                    onClick={() => setSelected(item)}
+                  />
+                ))}
+                <AddTile onClick={() => setAdding(true)} />
+              </>
+            )}
           </div>
         </div>
 
@@ -156,6 +164,11 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
           </div>
         </button>
       </div>
+
+      {selected && (
+        <ItemModal item={selected} onClose={() => setSelected(null)} />
+      )}
+      {adding && <AddItemModal onClose={() => setAdding(false)} />}
     </div>
   );
 }

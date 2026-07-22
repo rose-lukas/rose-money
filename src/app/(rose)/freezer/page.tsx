@@ -1,16 +1,34 @@
-import { FreezerScene, type FreezerItem } from "@/components/freezer/freezer-scene";
+import { createClient } from "@/lib/supabase/server";
+import { FreezerScene } from "@/components/freezer/freezer-scene";
+import { getUserAccountId } from "@/lib/account";
+import type { FreezerItem } from "@/components/freezer/types";
 
-// Milestone 1: placeholder items to demo the open animation + amount indicators.
-// Real items (with product photos) come in the next milestone.
-const PLACEHOLDER_ITEMS: FreezerItem[] = [
-  { id: "1", name: "Chicken Nuggets", emoji: "🍗", amount: { kind: "fraction", num: 1, den: 2 } },
-  { id: "2", name: "McCain Fries", emoji: "🍟", amount: { kind: "fraction", num: 3, den: 4 } },
-  { id: "3", name: "Peas", emoji: "🫛", amount: { kind: "count", num: 3 } },
-  { id: "4", name: "Ice Cream", emoji: "🍦", amount: { kind: "fraction", num: 1, den: 3 } },
-  { id: "5", name: "Ground Beef", emoji: "🥩", amount: { kind: "count", num: 2 } },
-  { id: "6", name: "Pizza", emoji: "🍕", amount: { kind: "fraction", num: 1, den: 2 } },
-];
+export default async function FreezerPage() {
+  const supabase = await createClient();
 
-export default function FreezerPage() {
-  return <FreezerScene items={PLACEHOLDER_ITEMS} />;
+  // Ensure the user has an account (provisions if needed) before scoped query.
+  await getUserAccountId();
+
+  const { data } = await supabase
+    .from("freezer_items")
+    .select(
+      "id, name, emoji, image_url, amount_kind, amount_num, amount_den, barcode, notes"
+    )
+    .order("sort_order")
+    .order("created_at");
+
+  const items: FreezerItem[] = (data ?? []).map((r) => ({
+    id: r.id,
+    name: r.name,
+    emoji: r.emoji,
+    imageUrl: r.image_url,
+    barcode: r.barcode,
+    notes: r.notes,
+    amount:
+      r.amount_kind === "count"
+        ? { kind: "count", num: r.amount_num }
+        : { kind: "fraction", num: r.amount_num, den: r.amount_den ?? 1 },
+  }));
+
+  return <FreezerScene items={items} />;
 }
