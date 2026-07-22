@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { searchExpenses } from "@/app/(authenticated)/history/actions";
+import { searchExpenses } from "@/app/(rose)/money/history/actions";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 interface SearchResult {

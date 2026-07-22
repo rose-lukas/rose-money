@@ -1,6 +1,6 @@
-# Rose Money
+# RoseHome
 
-A mobile-first monthly budget and expense tracker built for two people to share. Replaces the old Word document budget system with a sleek web app.
+A mobile-first platform of household apps. The first app, **Money**, is a monthly budget and expense tracker built for a household to share.
 
 ## Stack
 

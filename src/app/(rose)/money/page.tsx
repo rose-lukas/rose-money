@@ -150,19 +150,19 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/expenses/new"
+              href="/money/expenses/new"
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               + Add Expense
             </Link>
             <Link
-              href={`/recap/${year}/${month}`}
+              href={`/money/recap/${year}/${month}`}
               className="rounded-md border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               Recap
             </Link>
             <Link
-              href={`/budget/${budget.id}`}
+              href={`/money/budget/${budget.id}`}
               className="rounded-md border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               {budget.status === "draft" ? "Setup" : "Budget"}
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
         {budget.status === "draft" && (
           <div className="rounded-xl border border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-950/30 p-4 text-sm">
             Your budget is still in <strong>draft</strong> mode.{" "}
-            <Link href={`/budget/${budget.id}`} className="underline font-medium">
+            <Link href={`/money/budget/${budget.id}`} className="underline font-medium">
               Review and activate it
             </Link>{" "}
             to start tracking expenses.
@@ -260,7 +260,7 @@ export default async function DashboardPage() {
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Recent Expenses</h2>
-              <Link href="/expenses" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <Link href="/money/expenses" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 View all →
               </Link>
             </div>
@@ -288,7 +288,7 @@ export default async function DashboardPage() {
             <div className="rounded-xl border border-dashed p-8 text-center">
               <p className="text-sm text-muted-foreground">No expenses yet this month.</p>
               <Link
-                href="/expenses/new"
+                href="/money/expenses/new"
                 className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
               >
                 Add your first expense →

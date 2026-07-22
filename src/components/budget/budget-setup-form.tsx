@@ -14,7 +14,7 @@ import {
   deleteFixedExpense,
   updateOverdraftApplied,
   closeBudget,
-} from "@/app/(authenticated)/budget/actions";
+} from "@/app/(rose)/money/budget/actions";
 
 interface BudgetSetupFormProps {
   budget: MonthlyBudget;

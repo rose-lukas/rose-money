@@ -6,7 +6,7 @@ import {
   addCategory,
   updateCategory,
   toggleCategory,
-} from "@/app/(authenticated)/settings/actions";
+} from "@/app/(rose)/money/settings/actions";
 
 interface Category {
   id: string;

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_CATEGORIES } from "@/lib/constants";
 
 export async function login(formData: FormData) {
@@ -20,7 +21,7 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function register(formData: FormData) {
@@ -57,12 +58,7 @@ export async function register(formData: FormData) {
   }
 
   // Use service role to create account/membership (user may not have active session yet)
-  const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-  const supabaseAdmin = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  const supabaseAdmin = createAdminClient();
 
   // Create account
   const { data: account, error: accountError } = await supabaseAdmin
@@ -99,7 +95,7 @@ export async function register(formData: FormData) {
   await supabaseAdmin.from("categories").insert(categoryInserts);
 
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/");
 }
 
 export async function logout() {

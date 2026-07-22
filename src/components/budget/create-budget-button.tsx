@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { createMonthlyBudget } from "@/app/(authenticated)/budget/actions";
+import { createMonthlyBudget } from "@/app/(rose)/money/budget/actions";
 
 interface CreateBudgetButtonProps {
   year: number;

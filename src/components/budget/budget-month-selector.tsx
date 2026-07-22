@@ -23,7 +23,7 @@ export function BudgetMonthSelector({ budgets, selectedId }: Props) {
   return (
     <select
       value={selectedId}
-      onChange={(e) => router.push(`/budget/${e.target.value}`)}
+      onChange={(e) => router.push(`/money/budget/${e.target.value}`)}
       className="rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
     >
       {budgets.map((b) => {

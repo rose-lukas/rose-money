@@ -16,8 +16,8 @@ export default async function BudgetPage() {
     .single();
 
   if (budget) {
-    redirect(`/budget/${budget.id}`);
+    redirect(`/money/budget/${budget.id}`);
   }
 
-  redirect("/dashboard");
+  redirect("/money");
 }

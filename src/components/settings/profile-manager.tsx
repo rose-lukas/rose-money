@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { updateProfile, uploadAvatar } from "@/app/(authenticated)/settings/actions";
+import { updateProfile, uploadAvatar } from "@/app/(rose)/settings/actions";
 
 interface Profile {
   id: string;

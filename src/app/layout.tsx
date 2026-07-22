@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Patrick_Hand } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { FontLoader } from "@/components/font-loader";
 import "./globals.css";
@@ -14,14 +14,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Modern geometric wordmark font for the RoseHome brand
+const poppins = Poppins({
+  variable: "--font-brand",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
+
+// Playful handwritten font for doodle-style apps (e.g. Freezer)
+const patrickHand = Patrick_Hand({
+  variable: "--font-doodle",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
 export const metadata: Metadata = {
-  title: "Rose Money",
-  description: "Personal monthly budget and expense tracker",
+  title: "RoseHome",
+  description: "Your household apps, all in one place",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Rose Money",
+    title: "RoseHome",
   },
   icons: {
     icon: "/favicon.png",
@@ -43,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} ${patrickHand.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
