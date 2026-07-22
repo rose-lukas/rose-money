@@ -4,6 +4,7 @@ import { useState } from "react";
 import { login, register } from "./actions";
 import { Button } from "@/components/ui/button";
 import { RoseLogo } from "@/components/rose-logo";
+import { ThemeToggle } from "@/components/theme-provider";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,11 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col items-center justify-center overflow-hidden px-6 py-12">
+      {/* Theme toggle */}
+      <div className="absolute right-4 top-4 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Animated ambient background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-rose-400/30 blur-3xl animate-rh-blob dark:bg-rose-500/20" />
