@@ -57,16 +57,16 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
       setRevealed(false);
       setOpen(false);
     } else {
-      // Open the lid, then reveal items once it has swung back
+      // Crack the lid, then reveal items
       setOpen(true);
-      window.setTimeout(() => setRevealed(true), 560);
+      window.setTimeout(() => setRevealed(true), 420);
     }
   }
 
   return (
-    <div className="relative flex min-h-[calc(100dvh-3.5rem)] flex-col items-center justify-center px-4">
-      {/* Heading pinned near the top */}
-      <div className="absolute inset-x-0 top-6 text-center">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col items-center px-4">
+      {/* Heading at the top */}
+      <div className="shrink-0 pt-6 text-center">
         <h1 className="font-doodle text-4xl text-slate-800 dark:text-slate-100">
           The Freezer
         </h1>
@@ -75,12 +75,12 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
         </p>
       </div>
 
-      {/* Freezer anchor (stays centered; items float above it) */}
-      <div className="relative">
-        {/* Items sliding out — absolutely above the freezer so it doesn't shift */}
+      {/* Centered region: items expand here and push the freezer down */}
+      <div className="flex w-full flex-1 flex-col items-center justify-center">
+        {/* Items sliding out (in flow, so the freezer moves down for them) */}
         <div
-          className={`absolute bottom-full left-1/2 mb-4 w-[min(92vw,30rem)] -translate-x-1/2 transition-opacity duration-300 ${
-            revealed ? "opacity-100" : "pointer-events-none opacity-0"
+          className={`w-[min(92vw,30rem)] overflow-hidden transition-[max-height,opacity,margin] duration-500 ease-out ${
+            revealed ? "mb-4 max-h-[42vh] opacity-100" : "mb-0 max-h-0 opacity-0"
           }`}
         >
           <div className="grid max-h-[42vh] grid-cols-2 gap-3 overflow-y-auto p-2 sm:grid-cols-3">
@@ -102,7 +102,7 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
             {open && (
               <div
                 aria-hidden
-                className="animate-rh-mist pointer-events-none absolute left-1/2 top-1 z-20 h-16 w-40 -translate-x-1/2 rounded-full bg-white/70 blur-xl"
+                className="animate-rh-mist pointer-events-none absolute left-1/2 top-1 z-20 h-14 w-40 -translate-x-1/2 rounded-full bg-white/70 blur-xl"
               />
             )}
 
@@ -110,8 +110,8 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
             <div className="absolute left-10 top-0 z-0 h-3 w-6 rounded-t-md border-[3px] border-b-0 border-slate-800 bg-slate-300" />
             <div className="absolute right-10 top-0 z-0 h-3 w-6 rounded-t-md border-[3px] border-b-0 border-slate-800 bg-slate-300" />
 
-            {/* Interior cavity */}
-            <div className="absolute left-2 right-2 top-2 z-0 h-24 rounded-t-2xl bg-gradient-to-b from-cyan-300 to-sky-600 shadow-[inset_0_12px_22px_rgba(0,0,0,0.4)]">
+            {/* Interior cavity (peeks through the crack) */}
+            <div className="absolute left-2 right-2 top-2 z-0 h-24 rounded-t-2xl bg-gradient-to-b from-cyan-300 to-sky-700 shadow-[inset_0_12px_22px_rgba(0,0,0,0.45)]">
               <div className="absolute inset-0 rounded-t-2xl opacity-40 [background:radial-gradient(circle_at_20%_60%,white_0,transparent_18%),radial-gradient(circle_at_70%_40%,white_0,transparent_14%),radial-gradient(circle_at_45%_80%,white_0,transparent_12%)]" />
             </div>
 
@@ -143,15 +143,15 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
               </div>
             </div>
 
-            {/* Lid — hinged at the back (top edge), swings up and over */}
+            {/* Lid — hinged at the back (top edge); cracks open ~45° and stays visible */}
             <button
               type="button"
               onClick={toggle}
               aria-label={open ? "Close the freezer" : "Open the freezer"}
-              className="absolute left-0 right-0 top-0 z-30 h-28 origin-top cursor-pointer rounded-[1.4rem] border-4 border-slate-800 bg-gradient-to-b from-white to-sky-100 shadow-lg outline-none [backface-visibility:hidden] focus-visible:ring-4 focus-visible:ring-sky-300"
+              className="absolute left-0 right-0 top-0 z-30 h-28 origin-top cursor-pointer rounded-[1.4rem] border-4 border-slate-800 bg-gradient-to-b from-white to-sky-100 shadow-lg outline-none focus-visible:ring-4 focus-visible:ring-sky-300"
               style={{
-                transform: open ? "rotateX(-135deg)" : "rotateX(0deg)",
-                transition: "transform 0.65s cubic-bezier(0.34, 1.3, 0.5, 1)",
+                transform: open ? "rotateX(-45deg)" : "rotateX(0deg)",
+                transition: "transform 0.5s cubic-bezier(0.34, 1.3, 0.5, 1)",
               }}
             >
               <div className="flex h-full flex-col items-center justify-center gap-2">
