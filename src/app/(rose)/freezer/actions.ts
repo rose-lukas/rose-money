@@ -4,48 +4,6 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUserAccountId } from "@/lib/account";
 
-export interface OffResult {
-  name: string;
-  imageUrl: string | null;
-  barcode: string | null;
-  quantity: string | null;
-}
-
-export async function searchOpenFoodFacts(
-  query: string
-): Promise<{ results?: OffResult[]; error?: string }> {
-  const q = query.trim();
-  if (!q) return { results: [] };
-  try {
-    // ca. subdomain biases results to products sold in Canada; sort by scan
-    // popularity for relevance.
-    const url =
-      `https://ca.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}` +
-      `&search_simple=1&action=process&json=1&page_size=20&sort_by=unique_scans_n` +
-      `&fields=product_name,brands,image_front_small_url,code,quantity`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": "RoseHome-Freezer/1.0 (household app)" },
-    });
-    if (!res.ok) return { error: "Search failed. Try again." };
-    const data = await res.json();
-    const results: OffResult[] = (data.products ?? [])
-      .filter((p: { product_name?: string }) => p.product_name)
-      .slice(0, 12)
-      .map((p: { product_name: string; brands?: string; image_front_small_url?: string; code?: string; quantity?: string }) => ({
-        name: [p.brands?.split(",")[0]?.trim(), p.product_name]
-          .filter(Boolean)
-          .join(" ")
-          .slice(0, 80),
-        imageUrl: p.image_front_small_url ?? null,
-        barcode: p.code ?? null,
-        quantity: p.quantity ?? null,
-      }));
-    return { results };
-  } catch {
-    return { error: "Could not reach the product database." };
-  }
-}
-
 export async function addFreezerItem(formData: FormData) {
   const supabase = await createClient();
   const accountId = await getUserAccountId();
