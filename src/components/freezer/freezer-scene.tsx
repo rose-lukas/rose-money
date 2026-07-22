@@ -22,6 +22,7 @@ function ItemTile({
   onPointerDown,
   onPointerMove,
   onPointerUp,
+  onPointerCancel,
   itemRef,
 }: {
   item: FreezerItem;
@@ -37,6 +38,7 @@ function ItemTile({
   onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
   onPointerMove: (e: React.PointerEvent<HTMLButtonElement>) => void;
   onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => void;
+  onPointerCancel: (e: React.PointerEvent<HTMLButtonElement>) => void;
   itemRef: (el: HTMLButtonElement | null) => void;
 }) {
   return (
@@ -50,6 +52,7 @@ function ItemTile({
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
+      onPointerCancel={onPointerCancel}
       onDragOver={(e) => {
         e.preventDefault();
         onDragOver();
@@ -58,11 +61,12 @@ function ItemTile({
         e.preventDefault();
         onDrop();
       }}
-      className={`animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95 ${
+      className={`animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95 select-none touch-none ${
         dragging ? "z-30 scale-105 opacity-70 shadow-[6px_8px_0_rgba(15,23,42,0.9)] transition-none" : "opacity-100"
       }`}
       style={{
         animationDelay: `${index * 70}ms`,
+        WebkitUserSelect: "none",
         transform: dragging
           ? `translate(${dragOffset.x}px, ${dragOffset.y}px)`
           : undefined,
@@ -110,8 +114,10 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
   const justDragged = useRef(false);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const eatZoneRef = useRef<HTMLDivElement | null>(null);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchStartRef = useRef<{ id: string; x: number; y: number } | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
+
+  const MOBILE_DRAG_THRESHOLD_PX = 10;
 
   useEffect(() => {
     setOrderedItems(items);
@@ -198,70 +204,99 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
     return null;
   }
 
-  function handleTouchStart(id: string) {
-    if (!isMobile || pending) return;
-    setDraggingId(id);
-    setDragOffset({ x: 0, y: 0 });
-  }
-
   function handlePointerDown(id: string, e: React.PointerEvent<HTMLButtonElement>) {
     if (!isMobile || pending) return;
     e.preventDefault();
     activePointerIdRef.current = e.pointerId;
-    touchStartRef.current = { x: e.clientX, y: e.clientY };
-    handleTouchStart(id);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    touchStartRef.current = { id, x: e.clientX, y: e.clientY };
+    setDraggingId(null);
+    setDragOffset({ x: 0, y: 0 });
+    setDragOverDelete(false);
   }
 
-  function handlePointerMove(e: React.PointerEvent<HTMLButtonElement>) {
-    if (!isMobile || !draggingId) return;
+  function handlePointerMove(id: string, e: React.PointerEvent<HTMLButtonElement>) {
+    if (!isMobile) return;
     if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
       return;
     }
     const start = touchStartRef.current;
     if (!start) return;
     e.preventDefault();
-    setDragOffset({ x: e.clientX - start.x, y: e.clientY - start.y });
+
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (!draggingId) {
+      if (distance < MOBILE_DRAG_THRESHOLD_PX || start.id !== id) return;
+      setDraggingId(id);
+    }
+
+    setDragOffset({ x: dx, y: dy });
     const target = findDropTarget(e.clientX, e.clientY);
     setDragOverDelete(target?.type === "eat");
   }
 
-  function handlePointerUp(e: React.PointerEvent<HTMLButtonElement>) {
-    if (!isMobile || !draggingId) return;
+  function clearPointerDragState() {
+    activePointerIdRef.current = null;
+    touchStartRef.current = null;
+    setDragOffset({ x: 0, y: 0 });
+    setDraggingId(null);
+    setDragOverDelete(false);
+  }
+
+  function handlePointerUp(item: FreezerItem, e: React.PointerEvent<HTMLButtonElement>) {
+    if (!isMobile) return;
     if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
       return;
     }
-    activePointerIdRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
 
     if (touchStartRef.current == null) {
-      touchStartRef.current = null;
-      setDragOffset({ x: 0, y: 0 });
-      setDraggingId(null);
-      setDragOverDelete(false);
+      clearPointerDragState();
       return;
     }
+
+    const wasDragging = draggingId === item.id;
 
     justDragged.current = true;
     window.setTimeout(() => {
       justDragged.current = false;
     }, 180);
 
+    if (!wasDragging) {
+      clearPointerDragState();
+      setSelected(item);
+      return;
+    }
+
     const target = findDropTarget(e.clientX, e.clientY);
     if (target?.type === "eat") {
+      activePointerIdRef.current = null;
       touchStartRef.current = null;
       handleDropToEat();
       return;
     }
     if (target?.type === "item" && target.id) {
+      activePointerIdRef.current = null;
       touchStartRef.current = null;
       handleDropOnItem(target.id);
       setDragOverDelete(false);
       return;
     }
 
-    touchStartRef.current = null;
-    setDragOffset({ x: 0, y: 0 });
-    setDraggingId(null);
-    setDragOverDelete(false);
+    clearPointerDragState();
+  }
+
+  function handlePointerCancel(e: React.PointerEvent<HTMLButtonElement>) {
+    if (!isMobile) return;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    clearPointerDragState();
   }
 
   return (
@@ -315,8 +350,9 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                       setDraggingId(null);
                     }}
                     onPointerDown={(e) => handlePointerDown(item.id, e)}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
+                    onPointerMove={(e) => handlePointerMove(item.id, e)}
+                    onPointerUp={(e) => handlePointerUp(item, e)}
+                    onPointerCancel={handlePointerCancel}
                     onDragOver={() => {
                       // Keep this as a no-op so the tile is a valid drop target.
                     }}
