@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "./modal";
 import { AmountPicker } from "./amount-picker";
-import { updateFreezerAmount, deleteFreezerItem } from "@/app/(rose)/freezer/actions";
+import { WeightInput } from "./weight-input";
+import { updateFreezerItem, deleteFreezerItem } from "@/app/(rose)/freezer/actions";
 import type { FreezerItem, FreezerAmount } from "./types";
 
 export function ItemModal({
@@ -16,19 +17,31 @@ export function ItemModal({
 }) {
   const router = useRouter();
   const [amount, setAmount] = useState<FreezerAmount>(item.amount);
+  const [weightValue, setWeightValue] = useState(
+    item.weightValue != null ? String(item.weightValue) : ""
+  );
+  const [weightUnit, setWeightUnit] = useState(item.weightUnit ?? "g");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
 
-  const dirty = JSON.stringify(amount) !== JSON.stringify(item.amount);
+  const parsedWeight =
+    weightValue.trim() === "" || isNaN(Number(weightValue)) ? null : Number(weightValue);
+
+  const dirty =
+    JSON.stringify(amount) !== JSON.stringify(item.amount) ||
+    parsedWeight !== item.weightValue ||
+    (parsedWeight != null && weightUnit !== (item.weightUnit ?? "g"));
 
   function save() {
     start(async () => {
-      await updateFreezerAmount(
-        item.id,
-        amount.kind === "fraction"
-          ? { kind: "fraction", num: amount.num, den: amount.den }
-          : { kind: "count", num: amount.num }
-      );
+      await updateFreezerItem(item.id, {
+        amount:
+          amount.kind === "fraction"
+            ? { kind: "fraction", num: amount.num, den: amount.den }
+            : { kind: "count", num: amount.num },
+        weightValue: parsedWeight,
+        weightUnit: parsedWeight != null ? weightUnit : null,
+      });
       router.refresh();
       onClose();
     });
@@ -70,6 +83,20 @@ export function ItemModal({
             How much is left?
           </p>
           <AmountPicker value={amount} onChange={setAmount} />
+        </div>
+
+        <div>
+          <p className="mb-2 font-doodle text-xl text-slate-700 dark:text-slate-200">
+            Weight (optional)
+          </p>
+          <WeightInput
+            value={weightValue}
+            unit={weightUnit}
+            onChange={(v, u) => {
+              setWeightValue(v);
+              setWeightUnit(u);
+            }}
+          />
         </div>
 
         <div className="flex gap-2 pt-1">

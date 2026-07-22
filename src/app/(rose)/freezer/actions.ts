@@ -8,6 +8,7 @@ export interface OffResult {
   name: string;
   imageUrl: string | null;
   barcode: string | null;
+  quantity: string | null;
 }
 
 export async function searchOpenFoodFacts(
@@ -16,10 +17,12 @@ export async function searchOpenFoodFacts(
   const q = query.trim();
   if (!q) return { results: [] };
   try {
+    // ca. subdomain biases results to products sold in Canada; sort by scan
+    // popularity for relevance.
     const url =
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}` +
-      `&search_simple=1&action=process&json=1&page_size=12` +
-      `&fields=product_name,brands,image_front_small_url,code`;
+      `https://ca.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}` +
+      `&search_simple=1&action=process&json=1&page_size=20&sort_by=unique_scans_n` +
+      `&fields=product_name,brands,image_front_small_url,code,quantity`;
     const res = await fetch(url, {
       headers: { "User-Agent": "RoseHome-Freezer/1.0 (household app)" },
     });
@@ -28,13 +31,14 @@ export async function searchOpenFoodFacts(
     const results: OffResult[] = (data.products ?? [])
       .filter((p: { product_name?: string }) => p.product_name)
       .slice(0, 12)
-      .map((p: { product_name: string; brands?: string; image_front_small_url?: string; code?: string }) => ({
+      .map((p: { product_name: string; brands?: string; image_front_small_url?: string; code?: string; quantity?: string }) => ({
         name: [p.brands?.split(",")[0]?.trim(), p.product_name]
           .filter(Boolean)
           .join(" ")
           .slice(0, 80),
         imageUrl: p.image_front_small_url ?? null,
         barcode: p.code ?? null,
+        quantity: p.quantity ?? null,
       }));
     return { results };
   } catch {
@@ -56,6 +60,9 @@ export async function addFreezerItem(formData: FormData) {
       ? parseInt(formData.get("amount_den") as string) || 1
       : null;
   const barcode = ((formData.get("barcode") as string) || "").trim() || null;
+  const weightRaw = ((formData.get("weight_value") as string) || "").trim();
+  const weightValue = weightRaw === "" || isNaN(Number(weightRaw)) ? null : Number(weightRaw);
+  const weightUnit = weightValue != null ? ((formData.get("weight_unit") as string) || "g").trim() : null;
   let imageUrl = ((formData.get("image_url") as string) || "").trim() || null;
 
   if (!name) return { error: "Please enter a name." };
@@ -90,6 +97,8 @@ export async function addFreezerItem(formData: FormData) {
     amount_kind: amountKind,
     amount_num: amountNum,
     amount_den: amountDen,
+    weight_value: weightValue,
+    weight_unit: weightUnit,
     barcode,
     sort_order: sortOrder,
   });
@@ -99,17 +108,24 @@ export async function addFreezerItem(formData: FormData) {
   return { success: true };
 }
 
-export async function updateFreezerAmount(
+export async function updateFreezerItem(
   id: string,
-  amount: { kind: "fraction" | "count"; num: number; den?: number | null }
+  fields: {
+    amount: { kind: "fraction" | "count"; num: number; den?: number | null };
+    weightValue: number | null;
+    weightUnit: string | null;
+  }
 ) {
   const supabase = await createClient();
+  const { amount, weightValue, weightUnit } = fields;
   const { error } = await supabase
     .from("freezer_items")
     .update({
       amount_kind: amount.kind,
       amount_num: amount.num,
       amount_den: amount.kind === "fraction" ? amount.den ?? 1 : null,
+      weight_value: weightValue,
+      weight_unit: weightValue != null ? weightUnit : null,
     })
     .eq("id", id);
   if (error) return { error: error.message };

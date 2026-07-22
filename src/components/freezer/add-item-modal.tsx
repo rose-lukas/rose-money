@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "./modal";
 import { EmojiPicker } from "./emoji-picker";
 import { AmountPicker } from "./amount-picker";
+import { WeightInput, parseQuantity } from "./weight-input";
 import {
   searchOpenFoodFacts,
   addFreezerItem,
@@ -20,6 +21,8 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("🧊");
   const [amount, setAmount] = useState<FreezerAmount>({ kind: "fraction", num: 1, den: 1 });
+  const [weightValue, setWeightValue] = useState("");
+  const [weightUnit, setWeightUnit] = useState("g");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [barcode, setBarcode] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -48,6 +51,11 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
     setBarcode(res.barcode);
     setFile(null);
     setFilePreview(null);
+    const w = parseQuantity(res.quantity);
+    if (w) {
+      setWeightValue(w.value);
+      setWeightUnit(w.unit);
+    }
   }
 
   function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -69,6 +77,10 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
     fd.set("amount_kind", amount.kind);
     fd.set("amount_num", String(amount.num));
     if (amount.kind === "fraction") fd.set("amount_den", String(amount.den));
+    if (weightValue.trim() !== "" && !isNaN(Number(weightValue))) {
+      fd.set("weight_value", weightValue.trim());
+      fd.set("weight_unit", weightUnit);
+    }
     if (barcode) fd.set("barcode", barcode);
     if (imageUrl) fd.set("image_url", imageUrl);
     if (file) fd.set("image", file);
@@ -181,6 +193,21 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
           <label className="text-sm font-medium">Amount</label>
           <div className="mt-1">
             <AmountPicker value={amount} onChange={setAmount} />
+          </div>
+        </div>
+
+        {/* weight */}
+        <div>
+          <label className="text-sm font-medium">Weight (optional)</label>
+          <div className="mt-1">
+            <WeightInput
+              value={weightValue}
+              unit={weightUnit}
+              onChange={(v, u) => {
+                setWeightValue(v);
+                setWeightUnit(u);
+              }}
+            />
           </div>
         </div>
 

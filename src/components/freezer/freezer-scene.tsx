@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AmountBadge } from "./amount-badge";
+import { AmountBadge, WeightBadge } from "./amount-badge";
 import { ItemModal } from "./item-modal";
 import { AddItemModal } from "./add-item-modal";
 import type { FreezerItem } from "./types";
@@ -26,7 +26,12 @@ function ItemTile({
       <div className="font-doodle line-clamp-1 text-base leading-tight text-slate-800">
         {item.name}
       </div>
-      <AmountBadge amount={item.amount} />
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        {item.weightValue != null && (
+          <WeightBadge value={item.weightValue} unit={item.weightUnit ?? "g"} />
+        )}
+        <AmountBadge amount={item.amount} />
+      </div>
     </button>
   );
 }

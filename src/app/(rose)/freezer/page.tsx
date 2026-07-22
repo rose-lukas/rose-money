@@ -12,7 +12,7 @@ export default async function FreezerPage() {
   const { data } = await supabase
     .from("freezer_items")
     .select(
-      "id, name, emoji, image_url, amount_kind, amount_num, amount_den, barcode, notes"
+      "id, name, emoji, image_url, amount_kind, amount_num, amount_den, weight_value, weight_unit, barcode, notes"
     )
     .order("sort_order")
     .order("created_at");
@@ -22,6 +22,8 @@ export default async function FreezerPage() {
     name: r.name,
     emoji: r.emoji,
     imageUrl: r.image_url,
+    weightValue: r.weight_value != null ? Number(r.weight_value) : null,
+    weightUnit: r.weight_unit,
     barcode: r.barcode,
     notes: r.notes,
     amount:

@@ -14,10 +14,23 @@ export function formatAmount(amount: FreezerAmount): string {
   return FRACTION_GLYPHS[`${amount.num}/${amount.den}`] ?? `${amount.num}/${amount.den}`;
 }
 
+export function formatWeight(value: number, unit: string): string {
+  const n = Number.isInteger(value) ? value : Number(value.toFixed(2));
+  return `${n}${unit}`;
+}
+
 export function AmountBadge({ amount }: { amount: FreezerAmount }) {
   return (
     <span className="inline-flex min-w-7 items-center justify-center rounded-full border-2 border-slate-800 bg-sky-100 px-2 py-0.5 text-sm font-bold leading-none text-slate-800">
       {formatAmount(amount)}
+    </span>
+  );
+}
+
+export function WeightBadge({ value, unit }: { value: number; unit: string }) {
+  return (
+    <span className="inline-flex items-center justify-center rounded-full border-2 border-slate-800 bg-amber-100 px-2 py-0.5 text-sm font-bold leading-none text-slate-800">
+      {formatWeight(value, unit)}
     </span>
   );
 }

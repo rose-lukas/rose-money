@@ -10,6 +10,8 @@ CREATE TABLE freezer_items (
     amount_kind TEXT NOT NULL DEFAULT 'fraction' CHECK (amount_kind IN ('fraction', 'count')),
     amount_num INT NOT NULL DEFAULT 1,
     amount_den INT,
+    weight_value NUMERIC,
+    weight_unit TEXT,
     barcode TEXT,
     notes TEXT,
     sort_order INT NOT NULL DEFAULT 0,
