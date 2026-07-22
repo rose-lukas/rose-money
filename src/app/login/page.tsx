@@ -40,9 +40,9 @@ export default function LoginPage() {
 
       {/* Animated ambient background */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-rose-400/30 blur-3xl animate-rh-blob dark:bg-rose-500/20" style={{ animationDuration: "16s" }} />
-        <div className="absolute -right-24 top-1/3 h-80 w-80 rounded-full bg-pink-400/25 blur-3xl animate-rh-blob dark:bg-pink-500/15" style={{ animationDuration: "22s", animationDelay: "-7s" }} />
-        <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-fuchsia-400/20 blur-3xl animate-rh-blob dark:bg-fuchsia-500/10" style={{ animationDuration: "19s", animationDelay: "-13s" }} />
+        <div className="absolute left-0 top-0 h-72 w-72 rounded-full bg-rose-400/30 blur-3xl animate-rh-wander-1 dark:bg-rose-500/20" />
+        <div className="absolute left-0 top-0 h-80 w-80 rounded-full bg-pink-400/25 blur-3xl animate-rh-wander-2 dark:bg-pink-500/15" />
+        <div className="absolute left-0 top-0 h-72 w-72 rounded-full bg-fuchsia-400/20 blur-3xl animate-rh-wander-3 dark:bg-fuchsia-500/10" />
       </div>
 
       <div className="w-full max-w-sm space-y-8">
