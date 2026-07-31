@@ -360,13 +360,14 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
 
                 {view === "grid" ? (
                   <div className="grid max-h-[38vh] grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4">
+                    <AddTile onClick={() => setAdding(true)} />
                     {orderedItems.map((item, i) => (
                       <ItemTile key={item.id} {...tileProps(item, i)} />
                     ))}
-                    <AddTile onClick={() => setAdding(true)} />
                   </div>
                 ) : (
                   <div className="flex max-h-[38vh] flex-col gap-3 overflow-y-auto">
+                    <AddRow onClick={() => setAdding(true)} />
                     {groupedItems.map((group) => (
                       <div key={group.name}>
                         <h3 className="font-doodle mb-1 text-sm uppercase tracking-wide text-slate-500">
@@ -379,7 +380,6 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                         </div>
                       </div>
                     ))}
-                    <AddRow onClick={() => setAdding(true)} />
                   </div>
                 )}
               </>
