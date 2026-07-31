@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "./modal";
 import { EmojiPicker } from "./emoji-picker";
 import { ImagePicker } from "./image-picker";
+import { CategoryPicker } from "./category-picker";
 import { AmountPicker } from "./amount-picker";
 import { WeightInput } from "./weight-input";
 import { addFreezerItem } from "@/app/(rose)/freezer/actions";
@@ -13,12 +14,16 @@ import type { FreezerAmount } from "./types";
 // Image search is off until the Google Custom Search errors are sorted out.
 const IMAGE_SEARCH_ENABLED = false;
 
-export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
+export function AddItemModal({
+  onClose,
+  existingCategories,
+}: Readonly<{ onClose: () => void; existingCategories: string[] }>) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("🧊");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [pickedImageUrl, setPickedImageUrl] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(null);
   const [amount, setAmount] = useState<FreezerAmount>({ kind: "fraction", num: 1, den: 1 });
   const [weightValue, setWeightValue] = useState("");
   const [weightUnit, setWeightUnit] = useState("g");
@@ -43,6 +48,7 @@ export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
     const fd = new FormData();
     fd.set("name", name.trim());
     fd.set("emoji", emoji || "🧊");
+    if (category) fd.set("category", category);
     fd.set("amount_kind", amount.kind);
     fd.set("amount_num", String(amount.num));
     if (amount.kind === "fraction") fd.set("amount_den", String(amount.den));
@@ -102,8 +108,7 @@ export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
         <div>
           <label className="text-sm font-medium">
             {IMAGE_SEARCH_ENABLED ? "Or use your own photo" : "Photo (optional)"}
-          </label>
-          <div className="mt-1 space-y-2">
+          </label>          <div className="mt-1 space-y-2">
             <input type="file" accept="image/*" onChange={onFile} className="text-sm" />
             {filePreview && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -129,6 +134,18 @@ export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
               <EmojiPicker value={emoji} onChange={setEmoji} />
             </div>
           )}
+        </div>
+
+        {/* category */}
+        <div>
+          <label className="text-sm font-medium">Category (optional)</label>
+          <div className="mt-1">
+            <CategoryPicker
+              value={category}
+              existing={existingCategories}
+              onChange={setCategory}
+            />
+          </div>
         </div>
 
         {/* amount */}

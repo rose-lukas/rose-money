@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AmountBadge, WeightBadge } from "./amount-badge";
 import { ItemModal } from "./item-modal";
 import { AddItemModal } from "./add-item-modal";
 import { deleteFreezerItem, reorderFreezerItems } from "@/app/(rose)/freezer/actions";
 import type { FreezerItem } from "./types";
+import { UNCATEGORIZED_LABEL } from "./types";
 
 function ItemTile({
   item,
@@ -255,6 +256,62 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
     });
   }
 
+  const existingCategories = useMemo(
+    () =>
+      [...new Set(orderedItems.map((x) => x.category).filter((c): c is string => !!c))].sort((a, b) =>
+        a.localeCompare(b)
+      ),
+    [orderedItems]
+  );
+
+  // Named categories first (A–Z), with anything uncategorised pinned to the bottom.
+  const groupedItems = useMemo(() => {
+    const buckets = new Map<string, { item: FreezerItem; index: number }[]>();
+    orderedItems.forEach((item, index) => {
+      const key = item.category || UNCATEGORIZED_LABEL;
+      const bucket = buckets.get(key);
+      if (bucket) bucket.push({ item, index });
+      else buckets.set(key, [{ item, index }]);
+    });
+
+    return [...buckets.entries()]
+      .map(([name, entries]) => ({ name, items: entries }))
+      .sort((a, b) => {
+        if (a.name === UNCATEGORIZED_LABEL) return 1;
+        if (b.name === UNCATEGORIZED_LABEL) return -1;
+        return a.name.localeCompare(b.name);
+      });
+  }, [orderedItems]);
+
+  function tileProps(item: FreezerItem, index: number) {
+    return {
+      item,
+      index,
+      dragging: draggingId === item.id,
+      draggable: !isMobile,
+      onClick: () => {
+        if (draggingId || pending || justDragged.current) {
+          justDragged.current = false;
+          return;
+        }
+        setSelected(item);
+      },
+      onDragStart: () => setDraggingId(item.id),
+      onDragEnd: () => {
+        justDragged.current = true;
+        window.setTimeout(() => {
+          justDragged.current = false;
+        }, 140);
+        setDragOverDelete(false);
+        setDraggingId(null);
+      },
+      onDragOver: () => {
+        // Keep this as a no-op so the tile is a valid drop target.
+      },
+      onDrop: () => handleDropOnItem(item.id),
+    };
+  }
+
   return (
     <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col items-center px-4">
       {/* Heading at the top */}
@@ -301,53 +358,30 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                   </button>
                 </div>
 
-                <div
-                  className={`max-h-[38vh] overflow-y-auto ${
-                    view === "grid"
-                      ? "grid grid-cols-3 gap-3 sm:grid-cols-4"
-                      : "flex flex-col gap-2"
-                  }`}
-                >
-                  {orderedItems.map((item, i) => {
-                    const shared = {
-                      item,
-                      index: i,
-                      dragging: draggingId === item.id,
-                      draggable: !isMobile,
-                      onClick: () => {
-                        if (draggingId || pending || justDragged.current) {
-                          justDragged.current = false;
-                          return;
-                        }
-                        setSelected(item);
-                      },
-                      onDragStart: () => setDraggingId(item.id),
-                      onDragEnd: () => {
-                        justDragged.current = true;
-                        window.setTimeout(() => {
-                          justDragged.current = false;
-                        }, 140);
-                        setDragOverDelete(false);
-                        setDraggingId(null);
-                      },
-                      onDragOver: () => {
-                        // Keep this as a no-op so the tile is a valid drop target.
-                      },
-                      onDrop: () => handleDropOnItem(item.id),
-                    };
-
-                    return view === "grid" ? (
-                      <ItemTile key={item.id} {...shared} />
-                    ) : (
-                      <ItemRow key={item.id} {...shared} />
-                    );
-                  })}
-                  {view === "grid" ? (
+                {view === "grid" ? (
+                  <div className="grid max-h-[38vh] grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4">
+                    {orderedItems.map((item, i) => (
+                      <ItemTile key={item.id} {...tileProps(item, i)} />
+                    ))}
                     <AddTile onClick={() => setAdding(true)} />
-                  ) : (
+                  </div>
+                ) : (
+                  <div className="flex max-h-[38vh] flex-col gap-3 overflow-y-auto">
+                    {groupedItems.map((group) => (
+                      <div key={group.name}>
+                        <h3 className="font-doodle mb-1 text-sm uppercase tracking-wide text-slate-500">
+                          {group.name}
+                        </h3>
+                        <div className="flex flex-col gap-2">
+                          {group.items.map((entry) => (
+                            <ItemRow key={entry.item.id} {...tileProps(entry.item, entry.index)} />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                     <AddRow onClick={() => setAdding(true)} />
-                  )}
-                </div>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -448,9 +482,18 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
       </div>
 
       {selected && (
-        <ItemModal item={selected} onClose={() => setSelected(null)} />
+        <ItemModal
+          item={selected}
+          existingCategories={existingCategories}
+          onClose={() => setSelected(null)}
+        />
       )}
-      {adding && <AddItemModal onClose={() => setAdding(false)} />}
+      {adding && (
+        <AddItemModal
+          existingCategories={existingCategories}
+          onClose={() => setAdding(false)}
+        />
+      )}
     </div>
   );
 }

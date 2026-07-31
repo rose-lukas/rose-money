@@ -4,19 +4,23 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "./modal";
 import { AmountPicker } from "./amount-picker";
+import { CategoryPicker } from "./category-picker";
 import { WeightInput } from "./weight-input";
 import { updateFreezerItem, deleteFreezerItem } from "@/app/(rose)/freezer/actions";
 import type { FreezerItem, FreezerAmount } from "./types";
 
 export function ItemModal({
   item,
+  existingCategories,
   onClose,
-}: {
+}: Readonly<{
   item: FreezerItem;
+  existingCategories: string[];
   onClose: () => void;
-}) {
+}>) {
   const router = useRouter();
   const [amount, setAmount] = useState<FreezerAmount>(item.amount);
+  const [category, setCategory] = useState<string | null>(item.category);
   const [weightValue, setWeightValue] = useState(
     item.weightValue != null ? String(item.weightValue) : ""
   );
@@ -30,6 +34,7 @@ export function ItemModal({
   const dirty =
     JSON.stringify(amount) !== JSON.stringify(item.amount) ||
     parsedWeight !== item.weightValue ||
+    category !== item.category ||
     (parsedWeight != null && weightUnit !== (item.weightUnit ?? "g"));
 
   function save() {
@@ -41,6 +46,7 @@ export function ItemModal({
             : { kind: "count", num: amount.num },
         weightValue: parsedWeight,
         weightUnit: parsedWeight != null ? weightUnit : null,
+        category,
       });
       router.refresh();
       onClose();
@@ -83,6 +89,17 @@ export function ItemModal({
             How much is left?
           </p>
           <AmountPicker value={amount} onChange={setAmount} />
+        </div>
+
+        <div>
+          <p className="mb-2 font-doodle text-xl text-slate-700 dark:text-slate-200">
+            Category
+          </p>
+          <CategoryPicker
+            value={category}
+            existing={existingCategories}
+            onChange={setCategory}
+          />
         </div>
 
         <div>

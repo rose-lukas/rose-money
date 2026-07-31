@@ -67,6 +67,7 @@ export async function addFreezerItem(formData: FormData) {
       ? Number.parseInt(formData.get("amount_den") as string) || 1
       : null;
   const barcode = ((formData.get("barcode") as string) || "").trim() || null;
+  const category = ((formData.get("category") as string) || "").trim() || null;
   const weightRaw = ((formData.get("weight_value") as string) || "").trim();
   const weightValue = weightRaw === "" || Number.isNaN(Number(weightRaw)) ? null : Number(weightRaw);
   const weightUnit = weightValue != null ? ((formData.get("weight_unit") as string) || "g").trim() : null;
@@ -90,6 +91,7 @@ export async function addFreezerItem(formData: FormData) {
     name,
     emoji,
     image_url: imageUrl,
+    category,
     amount_kind: amountKind,
     amount_num: amountNum,
     amount_den: amountDen,
@@ -110,10 +112,11 @@ export async function updateFreezerItem(
     amount: { kind: "fraction" | "count"; num: number; den?: number | null };
     weightValue: number | null;
     weightUnit: string | null;
+    category: string | null;
   }
 ) {
   const supabase = await createClient();
-  const { amount, weightValue, weightUnit } = fields;
+  const { amount, weightValue, weightUnit, category } = fields;
   const { error } = await supabase
     .from("freezer_items")
     .update({
@@ -122,6 +125,7 @@ export async function updateFreezerItem(
       amount_den: amount.kind === "fraction" ? amount.den ?? 1 : null,
       weight_value: weightValue,
       weight_unit: weightValue != null ? weightUnit : null,
+      category: category?.trim() || null,
     })
     .eq("id", id);
   if (error) return { error: error.message };
