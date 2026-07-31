@@ -13,46 +13,29 @@ function ItemTile({
   index,
   onClick,
   dragging,
-  dragOffset,
   draggable,
   onDragStart,
   onDragEnd,
   onDragOver,
   onDrop,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  onPointerCancel,
-  itemRef,
 }: {
   item: FreezerItem;
   index: number;
   onClick: () => void;
   dragging: boolean;
-  dragOffset: { x: number; y: number };
   draggable: boolean;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: () => void;
   onDrop: () => void;
-  onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => void;
-  onPointerMove: (e: React.PointerEvent<HTMLButtonElement>) => void;
-  onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => void;
-  onPointerCancel: (e: React.PointerEvent<HTMLButtonElement>) => void;
-  itemRef: (el: HTMLButtonElement | null) => void;
 }) {
   return (
     <button
-      ref={itemRef}
       type="button"
       onClick={onClick}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerCancel}
       onDragOver={(e) => {
         e.preventDefault();
         onDragOver();
@@ -61,16 +44,10 @@ function ItemTile({
         e.preventDefault();
         onDrop();
       }}
-      className={`animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95 select-none touch-none ${
-        dragging ? "z-30 scale-105 opacity-70 shadow-[6px_8px_0_rgba(15,23,42,0.9)] transition-none" : "opacity-100"
+      className={`animate-rh-rise flex flex-col items-center gap-1 rounded-2xl border-[3px] border-slate-800 bg-white p-3 text-center shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform hover:-translate-y-0.5 active:scale-95 select-none ${
+        dragging ? "opacity-45" : "opacity-100"
       }`}
-      style={{
-        animationDelay: `${index * 70}ms`,
-        WebkitUserSelect: "none",
-        transform: dragging
-          ? `translate(${dragOffset.x}px, ${dragOffset.y}px)`
-          : undefined,
-      }}
+      style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="text-4xl leading-none">{item.emoji}</div>
       <div className="font-doodle line-clamp-1 text-base leading-tight text-slate-800">
@@ -108,16 +85,9 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
   const [orderedItems, setOrderedItems] = useState(items);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverDelete, setDragOverDelete] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
   const [pending, startTransition] = useTransition();
   const justDragged = useRef(false);
-  const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const eatZoneRef = useRef<HTMLDivElement | null>(null);
-  const touchStartRef = useRef<{ id: string; x: number; y: number } | null>(null);
-  const activePointerIdRef = useRef<number | null>(null);
-
-  const MOBILE_DRAG_THRESHOLD_PX = 10;
 
   useEffect(() => {
     setOrderedItems(items);
@@ -166,7 +136,6 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
       setOrderedItems(next);
       persistOrder(next);
     }
-    setDragOffset({ x: 0, y: 0 });
     setDraggingId(null);
   }
 
@@ -174,129 +143,12 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
     if (!draggingId) return;
     const deletingId = draggingId;
     setOrderedItems((current) => current.filter((x) => x.id !== deletingId));
-    setDragOffset({ x: 0, y: 0 });
     setDraggingId(null);
     setDragOverDelete(false);
     startTransition(async () => {
       await deleteFreezerItem(deletingId);
       router.refresh();
     });
-  }
-
-  function pointInRect(x: number, y: number, rect: DOMRect) {
-    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-  }
-
-  function findDropTarget(x: number, y: number): { type: "eat" | "item"; id?: string } | null {
-    const eatRect = eatZoneRef.current?.getBoundingClientRect();
-    if (eatRect && pointInRect(x, y, eatRect)) {
-      return { type: "eat" };
-    }
-
-    for (const [id, el] of Object.entries(itemRefs.current)) {
-      if (!el || id === draggingId) continue;
-      const rect = el.getBoundingClientRect();
-      if (pointInRect(x, y, rect)) {
-        return { type: "item", id };
-      }
-    }
-
-    return null;
-  }
-
-  function handlePointerDown(id: string, e: React.PointerEvent<HTMLButtonElement>) {
-    if (!isMobile || pending) return;
-    e.preventDefault();
-    activePointerIdRef.current = e.pointerId;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    touchStartRef.current = { id, x: e.clientX, y: e.clientY };
-    setDraggingId(null);
-    setDragOffset({ x: 0, y: 0 });
-    setDragOverDelete(false);
-  }
-
-  function handlePointerMove(id: string, e: React.PointerEvent<HTMLButtonElement>) {
-    if (!isMobile) return;
-    if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
-      return;
-    }
-    const start = touchStartRef.current;
-    if (!start) return;
-    e.preventDefault();
-
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
-    const distance = Math.hypot(dx, dy);
-
-    if (!draggingId) {
-      if (distance < MOBILE_DRAG_THRESHOLD_PX || start.id !== id) return;
-      setDraggingId(id);
-    }
-
-    setDragOffset({ x: dx, y: dy });
-    const target = findDropTarget(e.clientX, e.clientY);
-    setDragOverDelete(target?.type === "eat");
-  }
-
-  function clearPointerDragState() {
-    activePointerIdRef.current = null;
-    touchStartRef.current = null;
-    setDragOffset({ x: 0, y: 0 });
-    setDraggingId(null);
-    setDragOverDelete(false);
-  }
-
-  function handlePointerUp(item: FreezerItem, e: React.PointerEvent<HTMLButtonElement>) {
-    if (!isMobile) return;
-    if (activePointerIdRef.current !== null && e.pointerId !== activePointerIdRef.current) {
-      return;
-    }
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-
-    if (touchStartRef.current == null) {
-      clearPointerDragState();
-      return;
-    }
-
-    const wasDragging = draggingId === item.id;
-
-    justDragged.current = true;
-    window.setTimeout(() => {
-      justDragged.current = false;
-    }, 180);
-
-    if (!wasDragging) {
-      clearPointerDragState();
-      setSelected(item);
-      return;
-    }
-
-    const target = findDropTarget(e.clientX, e.clientY);
-    if (target?.type === "eat") {
-      activePointerIdRef.current = null;
-      touchStartRef.current = null;
-      handleDropToEat();
-      return;
-    }
-    if (target?.type === "item" && target.id) {
-      activePointerIdRef.current = null;
-      touchStartRef.current = null;
-      handleDropOnItem(target.id);
-      setDragOverDelete(false);
-      return;
-    }
-
-    clearPointerDragState();
-  }
-
-  function handlePointerCancel(e: React.PointerEvent<HTMLButtonElement>) {
-    if (!isMobile) return;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-    clearPointerDragState();
   }
 
   return (
@@ -328,7 +180,6 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                     item={item}
                     index={i}
                     dragging={draggingId === item.id}
-                    dragOffset={draggingId === item.id ? dragOffset : { x: 0, y: 0 }}
                     draggable={!isMobile}
                     onClick={() => {
                       if (draggingId || pending || justDragged.current) {
@@ -343,23 +194,13 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                       window.setTimeout(() => {
                         justDragged.current = false;
                       }, 140);
-                      setDragOffset({ x: 0, y: 0 });
-                      touchStartRef.current = null;
-                      activePointerIdRef.current = null;
                       setDragOverDelete(false);
                       setDraggingId(null);
                     }}
-                    onPointerDown={(e) => handlePointerDown(item.id, e)}
-                    onPointerMove={(e) => handlePointerMove(item.id, e)}
-                    onPointerUp={(e) => handlePointerUp(item, e)}
-                    onPointerCancel={handlePointerCancel}
                     onDragOver={() => {
                       // Keep this as a no-op so the tile is a valid drop target.
                     }}
                     onDrop={() => handleDropOnItem(item.id)}
-                    itemRef={(el) => {
-                      itemRefs.current[item.id] = el;
-                    }}
                   />
                 ))}
                 <AddTile onClick={() => setAdding(true)} />
@@ -374,7 +215,7 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
             type="button"
             onClick={toggle}
             aria-label={open ? "Close the freezer" : "Open the freezer"}
-            className={`${draggingId && isMobile ? "hidden sm:block" : "block"} w-[300px] max-w-[82vw] cursor-pointer rounded-[1.6rem] outline-none focus-visible:ring-4 focus-visible:ring-sky-300`}
+            className="block w-[300px] max-w-[82vw] cursor-pointer rounded-[1.6rem] outline-none focus-visible:ring-4 focus-visible:ring-sky-300"
           >
             <div className={`relative ${open ? "" : "animate-rh-bob"}`}>
             {/* Frosty mist rising from the opening (only when open) */}
@@ -438,7 +279,6 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
 
           {draggingId && (
             <div
-              ref={eatZoneRef}
               onDragOver={(e) => {
                 e.preventDefault();
                 setDragOverDelete(true);
@@ -448,13 +288,13 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
                 e.preventDefault();
                 handleDropToEat();
               }}
-              className={`${isMobile ? "mb-0 h-[18rem] w-[300px] max-w-[82vw]" : "mb-4 h-28 w-24"} flex shrink-0 select-none flex-col items-center justify-center rounded-2xl border-4 border-slate-800 bg-white shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform ${
+              className={`mb-4 flex h-28 w-24 shrink-0 select-none flex-col items-center justify-center rounded-2xl border-4 border-slate-800 bg-white shadow-[3px_3px_0_rgba(15,23,42,0.9)] transition-transform ${
                 dragOverDelete ? "scale-105 bg-rose-50" : ""
               }`}
               aria-label="Eat item"
               title="Drop here to eat it"
             >
-              <div className={`${isMobile ? "text-8xl" : "text-4xl"} leading-none`}>🍽️</div>
+              <div className="text-4xl leading-none">🍽️</div>
               <div className="font-doodle mt-1 text-sm text-slate-700">
                 {dragOverDelete ? "Nom nom" : "Eat"}
               </div>
