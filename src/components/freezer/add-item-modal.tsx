@@ -10,6 +10,9 @@ import { WeightInput } from "./weight-input";
 import { addFreezerItem } from "@/app/(rose)/freezer/actions";
 import type { FreezerAmount } from "./types";
 
+// Image search is off until the Google Custom Search errors are sorted out.
+const IMAGE_SEARCH_ENABLED = false;
+
 export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -76,26 +79,30 @@ export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
         </div>
 
         {/* picture from search */}
-        <div>
-          <label className="text-sm font-medium">Picture</label>
-          <div className="mt-1">
-            <ImagePicker
-              query={name}
-              selectedUrl={pickedImageUrl}
-              onSelect={(url) => {
-                setPickedImageUrl(url);
-                if (url) {
-                  setFile(null);
-                  setFilePreview(null);
-                }
-              }}
-            />
+        {IMAGE_SEARCH_ENABLED && (
+          <div>
+            <label className="text-sm font-medium">Picture</label>
+            <div className="mt-1">
+              <ImagePicker
+                query={name}
+                selectedUrl={pickedImageUrl}
+                onSelect={(url) => {
+                  setPickedImageUrl(url);
+                  if (url) {
+                    setFile(null);
+                    setFilePreview(null);
+                  }
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* own photo */}
         <div>
-          <label className="text-sm font-medium">Or use your own photo</label>
+          <label className="text-sm font-medium">
+            {IMAGE_SEARCH_ENABLED ? "Or use your own photo" : "Photo (optional)"}
+          </label>
           <div className="mt-1 space-y-2">
             <input type="file" accept="image/*" onChange={onFile} className="text-sm" />
             {filePreview && (

@@ -88,6 +88,87 @@ function AddTile({ onClick }: { onClick: () => void }) {
   );
 }
 
+function ItemRow({
+  item,
+  index,
+  onClick,
+  dragging,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop,
+}: Readonly<{
+  item: FreezerItem;
+  index: number;
+  onClick: () => void;
+  dragging: boolean;
+  draggable: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onDragOver: () => void;
+  onDrop: () => void;
+}>) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={(e) => {
+        e.preventDefault();
+        onDragOver();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
+      className={`animate-rh-rise flex w-full select-none items-center gap-3 rounded-xl border-[3px] border-slate-800 bg-white px-3 py-2 text-left shadow-[2px_2px_0_rgba(15,23,42,0.9)] transition-transform active:scale-[0.99] ${
+        dragging ? "opacity-45" : "opacity-100"
+      }`}
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      {item.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.imageUrl}
+          alt={item.name}
+          draggable={false}
+          className="h-8 w-8 shrink-0 rounded-md object-cover"
+        />
+      ) : (
+        <span className="w-8 shrink-0 text-center text-2xl leading-none">{item.emoji}</span>
+      )}
+      <span className="font-doodle line-clamp-1 flex-1 text-base leading-tight text-slate-800">
+        {item.name}
+      </span>
+      <span className="flex shrink-0 items-center gap-1">
+        {item.weightValue != null && (
+          <WeightBadge value={item.weightValue} unit={item.weightUnit ?? "g"} />
+        )}
+        <AmountBadge amount={item.amount} />
+      </span>
+    </button>
+  );
+}
+
+function AddRow({ onClick }: Readonly<{ onClick: () => void }>) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="animate-rh-rise flex w-full items-center gap-3 rounded-xl border-[3px] border-dashed border-slate-400 bg-white/60 px-3 py-2 text-left text-slate-500 transition-transform active:scale-[0.99]"
+    >
+      <span className="w-8 shrink-0 text-center text-2xl leading-none">＋</span>
+      <span className="font-doodle text-base leading-tight">Add item</span>
+    </button>
+  );
+}
+
+const VIEW_STORAGE_KEY = "freezer-view";
+type FreezerView = "grid" | "list";
+
 export function FreezerScene({ items }: { items: FreezerItem[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -98,12 +179,23 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverDelete, setDragOverDelete] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [view, setView] = useState<FreezerView>("grid");
   const [pending, startTransition] = useTransition();
   const justDragged = useRef(false);
 
   useEffect(() => {
     setOrderedItems(items);
   }, [items]);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    if (stored === "grid" || stored === "list") setView(stored);
+  }, []);
+
+  function changeView(next: FreezerView) {
+    setView(next);
+    window.localStorage.setItem(VIEW_STORAGE_KEY, next);
+  }
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 639px)");
@@ -183,39 +275,79 @@ export function FreezerScene({ items }: { items: FreezerItem[] }) {
             revealed ? "mb-4 max-h-[42vh] opacity-100" : "mb-0 max-h-0 opacity-0"
           }`}
         >
-          <div className="grid max-h-[42vh] grid-cols-3 gap-3 overflow-y-auto p-2 sm:grid-cols-4">
+          <div className="p-2">
             {revealed && (
               <>
-                {orderedItems.map((item, i) => (
-                  <ItemTile
-                    key={item.id}
-                    item={item}
-                    index={i}
-                    dragging={draggingId === item.id}
-                    draggable={!isMobile}
-                    onClick={() => {
-                      if (draggingId || pending || justDragged.current) {
-                        justDragged.current = false;
-                        return;
-                      }
-                      setSelected(item);
-                    }}
-                    onDragStart={() => setDraggingId(item.id)}
-                    onDragEnd={() => {
-                      justDragged.current = true;
-                      window.setTimeout(() => {
-                        justDragged.current = false;
-                      }, 140);
-                      setDragOverDelete(false);
-                      setDraggingId(null);
-                    }}
-                    onDragOver={() => {
-                      // Keep this as a no-op so the tile is a valid drop target.
-                    }}
-                    onDrop={() => handleDropOnItem(item.id)}
-                  />
-                ))}
-                <AddTile onClick={() => setAdding(true)} />
+                <div className="mb-2 flex justify-end gap-1">
+                  <button
+                    type="button"
+                    onClick={() => changeView("grid")}
+                    aria-pressed={view === "grid"}
+                    className={`rounded-lg border-2 border-slate-800 px-2 py-1 text-xs font-semibold ${
+                      view === "grid" ? "bg-slate-800 text-white" : "bg-white text-slate-800"
+                    }`}
+                  >
+                    Blocks
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeView("list")}
+                    aria-pressed={view === "list"}
+                    className={`rounded-lg border-2 border-slate-800 px-2 py-1 text-xs font-semibold ${
+                      view === "list" ? "bg-slate-800 text-white" : "bg-white text-slate-800"
+                    }`}
+                  >
+                    List
+                  </button>
+                </div>
+
+                <div
+                  className={`max-h-[38vh] overflow-y-auto ${
+                    view === "grid"
+                      ? "grid grid-cols-3 gap-3 sm:grid-cols-4"
+                      : "flex flex-col gap-2"
+                  }`}
+                >
+                  {orderedItems.map((item, i) => {
+                    const shared = {
+                      item,
+                      index: i,
+                      dragging: draggingId === item.id,
+                      draggable: !isMobile,
+                      onClick: () => {
+                        if (draggingId || pending || justDragged.current) {
+                          justDragged.current = false;
+                          return;
+                        }
+                        setSelected(item);
+                      },
+                      onDragStart: () => setDraggingId(item.id),
+                      onDragEnd: () => {
+                        justDragged.current = true;
+                        window.setTimeout(() => {
+                          justDragged.current = false;
+                        }, 140);
+                        setDragOverDelete(false);
+                        setDraggingId(null);
+                      },
+                      onDragOver: () => {
+                        // Keep this as a no-op so the tile is a valid drop target.
+                      },
+                      onDrop: () => handleDropOnItem(item.id),
+                    };
+
+                    return view === "grid" ? (
+                      <ItemTile key={item.id} {...shared} />
+                    ) : (
+                      <ItemRow key={item.id} {...shared} />
+                    );
+                  })}
+                  {view === "grid" ? (
+                    <AddTile onClick={() => setAdding(true)} />
+                  ) : (
+                    <AddRow onClick={() => setAdding(true)} />
+                  )}
+                </div>
               </>
             )}
           </div>
