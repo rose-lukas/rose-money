@@ -4,15 +4,18 @@ import { useState, useTransition, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "./modal";
 import { EmojiPicker } from "./emoji-picker";
+import { ImagePicker } from "./image-picker";
 import { AmountPicker } from "./amount-picker";
 import { WeightInput } from "./weight-input";
 import { addFreezerItem } from "@/app/(rose)/freezer/actions";
 import type { FreezerAmount } from "./types";
 
-export function AddItemModal({ onClose }: { onClose: () => void }) {
+export function AddItemModal({ onClose }: Readonly<{ onClose: () => void }>) {
   const router = useRouter();
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("🧊");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [pickedImageUrl, setPickedImageUrl] = useState<string | null>(null);
   const [amount, setAmount] = useState<FreezerAmount>({ kind: "fraction", num: 1, den: 1 });
   const [weightValue, setWeightValue] = useState("");
   const [weightUnit, setWeightUnit] = useState("g");
@@ -25,6 +28,7 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
     setFilePreview(f ? URL.createObjectURL(f) : null);
+    if (f) setPickedImageUrl(null);
   }
 
   function save() {
@@ -39,11 +43,12 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
     fd.set("amount_kind", amount.kind);
     fd.set("amount_num", String(amount.num));
     if (amount.kind === "fraction") fd.set("amount_den", String(amount.den));
-    if (weightValue.trim() !== "" && !isNaN(Number(weightValue))) {
+    if (weightValue.trim() !== "" && !Number.isNaN(Number(weightValue))) {
       fd.set("weight_value", weightValue.trim());
       fd.set("weight_unit", weightUnit);
     }
     if (file) fd.set("image", file);
+    else if (pickedImageUrl) fd.set("image_url", pickedImageUrl);
 
     start(async () => {
       const r = await addFreezerItem(fd);
@@ -70,9 +75,27 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
           />
         </div>
 
-        {/* optional photo */}
+        {/* picture from search */}
         <div>
-          <label className="text-sm font-medium">Photo (optional)</label>
+          <label className="text-sm font-medium">Picture</label>
+          <div className="mt-1">
+            <ImagePicker
+              query={name}
+              selectedUrl={pickedImageUrl}
+              onSelect={(url) => {
+                setPickedImageUrl(url);
+                if (url) {
+                  setFile(null);
+                  setFilePreview(null);
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* own photo */}
+        <div>
+          <label className="text-sm font-medium">Or use your own photo</label>
           <div className="mt-1 space-y-2">
             <input type="file" accept="image/*" onChange={onFile} className="text-sm" />
             {filePreview && (
@@ -82,12 +105,23 @@ export function AddItemModal({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* emoji */}
+        {/* emoji fallback */}
         <div>
-          <label className="text-sm font-medium">Freezer emoji</label>
-          <div className="mt-1">
-            <EmojiPicker value={emoji} onChange={setEmoji} />
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((v) => !v)}
+            className="flex w-full items-center justify-between text-sm font-medium"
+          >
+            <span>
+              Fallback emoji <span className="text-lg leading-none">{emoji}</span>
+            </span>
+            <span className="text-muted-foreground">{showEmojiPicker ? "Hide" : "Change"}</span>
+          </button>
+          {showEmojiPicker && (
+            <div className="mt-2">
+              <EmojiPicker value={emoji} onChange={setEmoji} />
+            </div>
+          )}
         </div>
 
         {/* amount */}

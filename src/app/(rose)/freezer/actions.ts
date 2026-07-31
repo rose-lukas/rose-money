@@ -3,6 +3,55 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getUserAccountId } from "@/lib/account";
+import {
+  downloadImage,
+  extensionForContentType,
+  searchImages,
+  type ImageSearchResult,
+} from "@/lib/image-search";
+
+/** Looks up candidate pictures for an item description. */
+export async function searchItemImages(
+  query: string,
+  page = 0
+): Promise<{ results: ImageSearchResult[]; error?: string }> {
+  await getUserAccountId();
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 0;
+  return searchImages(query, safePage);
+}
+
+async function resolveImageUrl(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  accountId: string,
+  formData: FormData
+): Promise<{ url: string | null; error?: string }> {
+  // Option 1: user-uploaded photo
+  const file = formData.get("image") as File | null;
+  if (file && file.size > 0) {
+    if (file.size > 5 * 1024 * 1024) return { url: null, error: "Image must be under 5MB." };
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${accountId}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("freezer-items").upload(path, file);
+    if (upErr) return { url: null, error: `Image upload failed: ${upErr.message}` };
+    return { url: supabase.storage.from("freezer-items").getPublicUrl(path).data.publicUrl };
+  }
+
+  // Option 2: image picked from search — re-host into our bucket
+  const pickedImageUrl = ((formData.get("image_url") as string) || "").trim();
+  if (pickedImageUrl) {
+    const downloaded = await downloadImage(pickedImageUrl);
+    if ("error" in downloaded) return { url: null, error: downloaded.error };
+    const ext = extensionForContentType(downloaded.contentType);
+    const path = `${accountId}/${crypto.randomUUID()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("freezer-items")
+      .upload(path, downloaded.bytes, { contentType: downloaded.contentType });
+    if (upErr) return { url: null, error: `Image upload failed: ${upErr.message}` };
+    return { url: supabase.storage.from("freezer-items").getPublicUrl(path).data.publicUrl };
+  }
+
+  return { url: null };
+}
 
 export async function addFreezerItem(formData: FormData) {
   const supabase = await createClient();
@@ -12,31 +61,20 @@ export async function addFreezerItem(formData: FormData) {
   const emoji = ((formData.get("emoji") as string) || "🧊").trim() || "🧊";
   const amountKind =
     (formData.get("amount_kind") as string) === "count" ? "count" : "fraction";
-  const amountNum = parseInt(formData.get("amount_num") as string) || 1;
+  const amountNum = Number.parseInt(formData.get("amount_num") as string) || 1;
   const amountDen =
     amountKind === "fraction"
-      ? parseInt(formData.get("amount_den") as string) || 1
+      ? Number.parseInt(formData.get("amount_den") as string) || 1
       : null;
   const barcode = ((formData.get("barcode") as string) || "").trim() || null;
   const weightRaw = ((formData.get("weight_value") as string) || "").trim();
-  const weightValue = weightRaw === "" || isNaN(Number(weightRaw)) ? null : Number(weightRaw);
+  const weightValue = weightRaw === "" || Number.isNaN(Number(weightRaw)) ? null : Number(weightRaw);
   const weightUnit = weightValue != null ? ((formData.get("weight_unit") as string) || "g").trim() : null;
-  let imageUrl = ((formData.get("image_url") as string) || "").trim() || null;
 
   if (!name) return { error: "Please enter a name." };
 
-  // Optional uploaded photo -> public bucket
-  const file = formData.get("image") as File | null;
-  if (file && file.size > 0) {
-    if (file.size > 5 * 1024 * 1024) return { error: "Image must be under 5MB." };
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${accountId}/${crypto.randomUUID()}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("freezer-items")
-      .upload(path, file);
-    if (upErr) return { error: `Image upload failed: ${upErr.message}` };
-    imageUrl = supabase.storage.from("freezer-items").getPublicUrl(path).data.publicUrl;
-  }
+  const { url: imageUrl, error: imgErr } = await resolveImageUrl(supabase, accountId, formData);
+  if (imgErr) return { error: imgErr };
 
   const { data: last } = await supabase
     .from("freezer_items")

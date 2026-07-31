@@ -49,7 +49,19 @@ function ItemTile({
       }`}
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      <div className="text-4xl leading-none">{item.emoji}</div>
+      {item.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.imageUrl}
+          alt={item.name}
+          draggable={false}
+          className="h-12 w-12 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex h-12 w-12 items-center justify-center text-4xl leading-none">
+          {item.emoji}
+        </div>
+      )}
       <div className="font-doodle line-clamp-1 text-base leading-tight text-slate-800">
         {item.name}
       </div>
