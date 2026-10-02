@@ -259,8 +259,7 @@ export async function recalculateOverdraft(budgetId: string) {
       .update({ overdraft_from_previous: overdraftAmount, overdraft_applied: true })
       .eq("id", budgetId);
   }
-
-  revalidatePath("/money/budget");
+  // No revalidatePath here: this is called during the budget page render, where it throws.
 }
 
 export async function confirmBudget(budgetId: string) {

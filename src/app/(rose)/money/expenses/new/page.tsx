@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExpenseForm } from "@/components/expenses/expense-form";
+import { getCurrentYearMonth } from "@/lib/format";
 
 export default async function NewExpensePage() {
   const supabase = await createClient();
@@ -13,8 +14,7 @@ export default async function NewExpensePage() {
     day: "2-digit",
   });
   const defaultDate = easternFormatter.format(now);
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month } = getCurrentYearMonth();
 
   // Get the current month's budget (active or draft)
   const { data: budget } = await supabase

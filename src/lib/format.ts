@@ -13,6 +13,17 @@ export function formatDate(date: string | Date): string {
   }).format(new Date(date));
 }
 
+/** Current year/month in Eastern time (the server runs in UTC). */
+export function getCurrentYearMonth(): { year: number; month: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(new Date());
+  const get = (type: string) => Number(parts.find((p) => p.type === type)!.value);
+  return { year: get("year"), month: get("month") };
+}
+
 export function getMonthName(month: number): string {
   return new Date(2000, month - 1).toLocaleString("en-CA", { month: "long" });
 }

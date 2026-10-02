@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, getMonthName, getWeeksForMonth } from "@/lib/format";
+import { formatCurrency, getCurrentYearMonth, getMonthName, getWeeksForMonth } from "@/lib/format";
 import { CreateBudgetButton } from "@/components/budget/create-budget-button";
 import { CategoryChart } from "@/components/dashboard/category-chart";
 import { WeeklyBreakdown } from "@/components/dashboard/weekly-breakdown";
@@ -19,9 +19,7 @@ function getGreeting(): string {
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const { year, month } = getCurrentYearMonth();
 
   // Fetch user profile for greeting
   const { data: { user } } = await supabase.auth.getUser();
