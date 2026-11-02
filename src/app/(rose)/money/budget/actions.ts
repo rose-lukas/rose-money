@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserAccountId } from "@/lib/account";
+import { getBudgetRemaining } from "@/lib/budget";
 
 export async function createMonthlyBudget(year: number, month: number) {
   const supabase = await createClient();
@@ -42,25 +43,7 @@ export async function createMonthlyBudget(year: number, month: number) {
 
   if (prevBudget && (prevBudget.status === "closed" || prevBudget.status === "active")) {
     // Calculate previous month's overdraft
-    const { data: prevIncome } = await supabase
-      .from("income_entries")
-      .select("amount")
-      .eq("budget_id", prevBudget.id);
-
-    const { data: prevFixed } = await supabase
-      .from("fixed_expenses")
-      .select("amount")
-      .eq("budget_id", prevBudget.id);
-
-    const { data: prevExpenses } = await supabase
-      .from("expenses")
-      .select("amount")
-      .eq("budget_id", prevBudget.id);
-
-    const totalIncome = (prevIncome ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalFixed = (prevFixed ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
-    const totalSpent = (prevExpenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
-    const remaining = totalIncome - totalFixed - totalSpent;
+    const remaining = await getBudgetRemaining(supabase, prevBudget.id);
 
     if (remaining < 0) {
       overdraftAmount = Math.abs(remaining);
@@ -241,16 +224,7 @@ export async function recalculateOverdraft(budgetId: string) {
 
   if (!prevBudget) return;
 
-  const [{ data: prevIncome }, { data: prevFixed }, { data: prevExpenses }] = await Promise.all([
-    supabase.from("income_entries").select("amount").eq("budget_id", prevBudget.id),
-    supabase.from("fixed_expenses").select("amount").eq("budget_id", prevBudget.id),
-    supabase.from("expenses").select("amount").eq("budget_id", prevBudget.id),
-  ]);
-
-  const totalIncome = (prevIncome ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
-  const totalFixed = (prevFixed ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
-  const totalSpent = (prevExpenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
-  const remaining = totalIncome - totalFixed - totalSpent;
+  const remaining = await getBudgetRemaining(supabase, prevBudget.id);
 
   if (remaining < 0) {
     const overdraftAmount = Math.abs(remaining);
@@ -297,4 +271,21 @@ export async function closeBudget(budgetId: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/money");
   redirect("/money");
+}
+
+export async function reopenBudget(budgetId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("monthly_budgets")
+    .update({ status: "active" })
+    .eq("id", budgetId)
+    .eq("status", "closed");
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/money");
+  revalidatePath("/money/budget");
+  revalidatePath("/money/budget/[id]", "page");
+  revalidatePath("/money/expenses");
+  revalidatePath("/money/history");
 }

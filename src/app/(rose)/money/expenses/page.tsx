@@ -3,6 +3,7 @@ import { formatCurrency } from "@/lib/format";
 import Link from "next/link";
 import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { MonthSelector } from "@/components/expenses/month-selector";
+import { ReopenBudgetButton } from "@/components/budget/reopen-budget-button";
 import { SpendingChart } from "@/components/expenses/spending-chart";
 
 export default async function ExpensesPage({
@@ -81,11 +82,14 @@ export default async function ExpensesPage({
           />
           {budget.status === "active" && (
             <Link
-              href="/money/expenses/new"
+              href={`/money/expenses/new?year=${budget.year}&month=${budget.month}`}
               className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               + Add
             </Link>
+          )}
+          {budget.status === "closed" && (
+            <ReopenBudgetButton budgetId={budget.id} label={monthName} />
           )}
         </div>
       </div>

@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isDateInBudgetMonth, syncNextMonthOverdraft } from "@/lib/budget";
+import { getMonthName } from "@/lib/format";
 
 export async function addExpense(formData: FormData) {
   const supabase = await createClient();
@@ -29,12 +31,18 @@ export async function addExpense(formData: FormData) {
   // Verify budget is active
   const { data: budget } = await supabase
     .from("monthly_budgets")
-    .select("status")
+    .select("status, year, month")
     .eq("id", budgetId)
     .single();
 
   if (!budget || budget.status !== "active") {
     return { error: "Budget must be active to add expenses." };
+  }
+
+  if (!isDateInBudgetMonth(date, budget.year, budget.month)) {
+    return {
+      error: `Date must be within ${getMonthName(budget.month)} ${budget.year}.`,
+    };
   }
 
   // Handle receipt upload
@@ -75,9 +83,12 @@ export async function addExpense(formData: FormData) {
     return { error: error.message };
   }
 
+  await syncNextMonthOverdraft(supabase, budgetId);
+
   revalidatePath("/money");
   revalidatePath("/money/expenses");
-  redirect("/money");
+  revalidatePath("/money/budget/[id]", "page");
+  redirect(`/money/expenses?year=${budget.year}&month=${budget.month}`);
 }
 
 export async function updateExpense(id: string, formData: FormData) {
@@ -117,17 +128,27 @@ export async function deleteExpense(id: string) {
   // Delete receipt from storage if exists
   const { data: expense } = await supabase
     .from("expenses")
-    .select("receipt_path")
+    .select("budget_id, receipt_path, monthly_budgets(status)")
     .eq("id", id)
     .single();
 
-  if (expense?.receipt_path) {
+  if (!expense) throw new Error("Expense not found");
+
+  const budgetStatus = (expense.monthly_budgets as unknown as { status: string } | null)?.status;
+  if (budgetStatus !== "active") {
+    throw new Error("Reopen the month to delete expenses.");
+  }
+
+  if (expense.receipt_path) {
     await supabase.storage.from("receipts").remove([expense.receipt_path]);
   }
 
   const { error } = await supabase.from("expenses").delete().eq("id", id);
   if (error) throw new Error(error.message);
 
+  await syncNextMonthOverdraft(supabase, expense.budget_id);
+
   revalidatePath("/money");
   revalidatePath("/money/expenses");
+  revalidatePath("/money/budget/[id]", "page");
 }

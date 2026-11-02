@@ -1,18 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { getCurrentYearMonth } from "@/lib/format";
+import { getWorkingBudget } from "@/lib/budget";
 
 export default async function BudgetPage() {
   const supabase = await createClient();
 
-  const { year, month } = getCurrentYearMonth();
-
-  const { data: budget } = await supabase
-    .from("monthly_budgets")
-    .select("id")
-    .eq("year", year)
-    .eq("month", month)
-    .single();
+  const budget = await getWorkingBudget(supabase);
 
   if (budget) {
     redirect(`/money/budget/${budget.id}`);

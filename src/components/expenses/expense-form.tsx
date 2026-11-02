@@ -10,6 +10,8 @@ interface ExpenseFormProps {
   profiles: { id: string; display_name: string }[];
   currentUserId: string;
   defaultDate: string;
+  minDate: string;
+  maxDate: string;
 }
 
 export function ExpenseForm({
@@ -18,6 +20,8 @@ export function ExpenseForm({
   profiles,
   currentUserId,
   defaultDate,
+  minDate,
+  maxDate,
 }: ExpenseFormProps) {
   const [entryType, setEntryType] = useState<"expense" | "return">("expense");
   const [error, setError] = useState<string | null>(null);
@@ -187,6 +191,8 @@ export function ExpenseForm({
           type="date"
           required
           defaultValue={defaultDate}
+          min={minDate}
+          max={maxDate}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </div>

@@ -1,28 +1,34 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExpenseForm } from "@/components/expenses/expense-form";
-import { getCurrentYearMonth } from "@/lib/format";
+import { getMonthName } from "@/lib/format";
+import { getBudgetDateBounds, getDefaultExpenseDate, getWorkingBudget } from "@/lib/budget";
+import { getUserAccountId } from "@/lib/account";
 
-export default async function NewExpensePage() {
+export default async function NewExpensePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string; month?: string }>;
+}) {
+  const { year: yearParam, month: monthParam } = await searchParams;
   const supabase = await createClient();
 
-  const now = new Date();
-  const easternFormatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Toronto",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const defaultDate = easternFormatter.format(now);
-  const { year, month } = getCurrentYearMonth();
+  const year = parseInt(yearParam ?? "", 10);
+  const month = parseInt(monthParam ?? "", 10);
 
-  // Get the current month's budget (active or draft)
-  const { data: budget } = await supabase
-    .from("monthly_budgets")
-    .select("id, year, month, status")
-    .eq("year", year)
-    .eq("month", month)
-    .single();
+  let budget: { id: string; year: number; month: number; status: string } | null = null;
+  if (Number.isInteger(year) && Number.isInteger(month)) {
+    const accountId = await getUserAccountId();
+    const { data } = await supabase
+      .from("monthly_budgets")
+      .select("id, year, month, status")
+      .eq("account_id", accountId)
+      .eq("year", year)
+      .eq("month", month)
+      .maybeSingle();
+    budget = data;
+  }
+  budget ??= await getWorkingBudget(supabase);
 
   if (!budget) {
     redirect("/money");
@@ -30,6 +36,10 @@ export default async function NewExpensePage() {
 
   if (budget.status === "draft") {
     redirect(`/money/budget/${budget.id}`);
+  }
+
+  if (budget.status === "closed") {
+    redirect(`/money/expenses?year=${budget.year}&month=${budget.month}`);
   }
 
   // Fetch categories and profiles
@@ -46,10 +56,14 @@ export default async function NewExpensePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { min, max } = getBudgetDateBounds(budget.year, budget.month);
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Add Expense</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Add Expense - {getMonthName(budget.month)} {budget.year}
+        </h1>
       </div>
 
       <ExpenseForm
@@ -57,7 +71,9 @@ export default async function NewExpensePage() {
         categories={categories ?? []}
         profiles={profiles ?? []}
         currentUserId={user?.id ?? ""}
-        defaultDate={defaultDate}
+        defaultDate={getDefaultExpenseDate(budget.year, budget.month)}
+        minDate={min}
+        maxDate={max}
       />
     </div>
   );

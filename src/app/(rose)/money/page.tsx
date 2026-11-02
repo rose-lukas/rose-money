@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatCurrency, getCurrentYearMonth, getMonthName, getWeeksForMonth } from "@/lib/format";
+import { getWorkingBudget, isBudgetBehindCalendar } from "@/lib/budget";
 import { CreateBudgetButton } from "@/components/budget/create-budget-button";
 import { CategoryChart } from "@/components/dashboard/category-chart";
 import { WeeklyBreakdown } from "@/components/dashboard/weekly-breakdown";
@@ -19,7 +20,7 @@ function getGreeting(): string {
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const { year, month } = getCurrentYearMonth();
+  const { year: calYear, month: calMonth } = getCurrentYearMonth();
 
   // Fetch user profile for greeting
   const { data: { user } } = await supabase.auth.getUser();
@@ -30,13 +31,8 @@ export default async function DashboardPage() {
     .single();
   const firstName = (profile?.display_name ?? "").split(" ")[0] || "there";
 
-  // Get the budget for current month
-  const { data: budget } = await supabase
-    .from("monthly_budgets")
-    .select("*")
-    .eq("year", year)
-    .eq("month", month)
-    .single();
+  // Most recent non-closed budget, not the calendar month
+  const budget = await getWorkingBudget(supabase);
 
   if (!budget) {
     return (
@@ -44,7 +40,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            {getMonthName(month)} {year}
+            {getMonthName(calMonth)} {calYear}
           </p>
         </div>
         <div className="rounded-lg border border-dashed p-8 text-center space-y-4">
@@ -52,11 +48,16 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted-foreground">
             Set up your monthly budget to start tracking expenses.
           </p>
-          <CreateBudgetButton year={year} month={month} />
+          <CreateBudgetButton year={calYear} month={calMonth} />
         </div>
       </div>
     );
   }
+
+  const { year, month } = budget;
+  const startNextHint = isBudgetBehindCalendar(year, month)
+    ? `It's ${getMonthName(calMonth)}. Start the ${getMonthName(calMonth)} budget when you're ready.`
+    : null;
 
   // Fetch income, fixed expenses, variable expenses, categories, and profiles
   const [
@@ -122,6 +123,13 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5">
 
+      {startNextHint && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/40 p-3 text-sm">
+          <span>{startNextHint}</span>
+          <CreateBudgetButton year={calYear} month={calMonth} />
+        </div>
+      )}
+
       {/* ─── MOBILE HERO ─── */}
       <MobileHero
         firstName={firstName}
@@ -148,7 +156,7 @@ export default async function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/money/expenses/new"
+              href={`/money/expenses/new?year=${year}&month=${month}`}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               + Add Expense
@@ -286,7 +294,7 @@ export default async function DashboardPage() {
             <div className="rounded-xl border border-dashed p-8 text-center">
               <p className="text-sm text-muted-foreground">No expenses yet this month.</p>
               <Link
-                href="/money/expenses/new"
+                href={`/money/expenses/new?year=${year}&month=${month}`}
                 className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
               >
                 Add your first expense →

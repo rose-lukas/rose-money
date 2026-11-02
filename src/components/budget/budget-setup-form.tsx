@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/format";
+import { ReopenBudgetButton } from "@/components/budget/reopen-budget-button";
 import type { MonthlyBudget, IncomeEntry, FixedExpense } from "@/lib/types";
 import {
   confirmBudget,
@@ -273,6 +274,15 @@ export function BudgetSetupForm({
           >
             Close Month
           </Button>
+        )}
+        {isClosed && (
+          <ReopenBudgetButton
+            budgetId={budget.id}
+            label={new Date(budget.year, budget.month - 1).toLocaleString("en-CA", {
+              month: "long",
+              year: "numeric",
+            })}
+          />
         )}
       </div>
     </div>
